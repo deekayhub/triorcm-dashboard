@@ -10,7 +10,7 @@ Route::middleware('guest')->get('/', fn (Request $request) => Inertia::render('a
     'status' => $request->session()->get('status'),
 ]))->name('home');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'permission:dashboard.view'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
 });
 

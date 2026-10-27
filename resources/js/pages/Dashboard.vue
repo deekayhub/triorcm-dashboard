@@ -9,6 +9,7 @@ import RevenueChart from '@/components/dashboard/RevenueChart.vue';
 import TopProducts from '@/components/dashboard/TopProducts.vue';
 import TrafficSources from '@/components/dashboard/TrafficSources.vue';
 import { Button } from '@/components/ui/button';
+import { usePermissions } from '@/composables/usePermissions';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 
@@ -82,6 +83,8 @@ const selectedRange = ref('30d');
 const rangeLabel = computed(
     () => ranges.find((range) => range.value === selectedRange.value)?.label ?? '30 days',
 );
+
+const { can } = usePermissions();
 </script>
 
 <template>
@@ -130,7 +133,12 @@ const rangeLabel = computed(
                     </button>
                 </div>
 
-                <Button variant="outline" size="sm" class="gap-1.5">
+                <Button
+                    v-if="can('dashboard.export')"
+                    variant="outline"
+                    size="sm"
+                    class="gap-1.5"
+                >
                     <Download class="size-3.5" aria-hidden="true" />
                     Export
                 </Button>

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
@@ -15,6 +16,7 @@ class RegistrationTest extends TestCase
         parent::setUp();
 
         $this->skipUnlessFortifyHas(Features::registration());
+        $this->seed(RolePermissionSeeder::class);
     }
 
     public function test_registration_screen_can_be_rendered()
@@ -34,6 +36,7 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
+        $this->assertTrue(auth()->user()->hasRole('viewer'));
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 }

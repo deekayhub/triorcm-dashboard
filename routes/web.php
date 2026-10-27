@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -12,6 +14,18 @@ Route::middleware('guest')->get('/', fn (Request $request) => Inertia::render('a
 
 Route::middleware(['auth', 'verified', 'permission:dashboard.view'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+
+    Route::get('users', [UserController::class, 'index'])
+        ->middleware('permission:users.view')
+        ->name('users.index');
+
+    Route::post('users', [UserController::class, 'store'])
+        ->middleware('role:super-admin')
+        ->name('users.store');
+
+    Route::get('roles', [RoleController::class, 'index'])
+        ->middleware('permission:roles.view')
+        ->name('roles.index');
 });
 
 require __DIR__.'/settings.php';

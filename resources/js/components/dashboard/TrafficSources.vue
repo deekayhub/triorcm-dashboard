@@ -10,8 +10,18 @@ import {
 
 const sources = [
     { label: 'Direct', value: 38, color: 'bg-chart-1', stroke: 'text-chart-1' },
-    { label: 'Organic search', value: 27, color: 'bg-chart-2', stroke: 'text-chart-2' },
-    { label: 'Referral', value: 21, color: 'bg-chart-3', stroke: 'text-chart-3' },
+    {
+        label: 'Organic search',
+        value: 27,
+        color: 'bg-chart-2',
+        stroke: 'text-chart-2',
+    },
+    {
+        label: 'Referral',
+        value: 21,
+        color: 'bg-chart-3',
+        stroke: 'text-chart-3',
+    },
     { label: 'Social', value: 14, color: 'bg-chart-4', stroke: 'text-chart-4' },
 ];
 
@@ -35,7 +45,9 @@ const segments = sources.map((source) => {
     <Card class="gap-0 py-0 shadow-none">
         <CardHeader class="border-b px-5 py-5">
             <CardTitle class="text-base">Traffic sources</CardTitle>
-            <CardDescription>Where sessions came from this month.</CardDescription>
+            <CardDescription
+                >Where sessions came from this month.</CardDescription
+            >
         </CardHeader>
 
         <CardContent class="px-5 py-5">
@@ -76,9 +88,16 @@ const segments = sources.map((source) => {
                     />
                 </svg>
 
-                <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <span class="text-2xl font-semibold tracking-tight tabular-nums">48.2k</span>
-                    <span class="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                <div
+                    class="absolute inset-0 flex flex-col items-center justify-center text-center"
+                >
+                    <span
+                        class="text-2xl font-semibold tracking-tight tabular-nums"
+                        >48.2k</span
+                    >
+                    <span
+                        class="text-[11px] tracking-[0.16em] text-muted-foreground uppercase"
+                    >
                         sessions
                     </span>
                 </div>
@@ -90,9 +109,15 @@ const segments = sources.map((source) => {
                     :key="`legend-${source.label}`"
                     class="flex items-center gap-3"
                 >
-                    <span class="size-2 shrink-0 rounded-full" :class="source.color" aria-hidden="true" />
+                    <span
+                        class="size-2 shrink-0 rounded-full"
+                        :class="source.color"
+                        aria-hidden="true"
+                    />
                     <span class="flex-1 text-sm">{{ source.label }}</span>
-                    <span class="text-sm tabular-nums text-muted-foreground">{{ source.value }}%</span>
+                    <span class="text-sm text-muted-foreground tabular-nums"
+                        >{{ source.value }}%</span
+                    >
                 </li>
             </ul>
         </CardContent>

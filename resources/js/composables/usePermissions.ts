@@ -8,9 +8,11 @@ export function usePermissions() {
     const roles = computed(() => auth.value.roles ?? []);
     const permissions = computed(() => auth.value.permissions ?? []);
 
-    const can = (permission: string): boolean => permissions.value.includes(permission);
+    const can = (permission: string): boolean =>
+        permissions.value.includes(permission);
     const hasRole = (role: string): boolean => roles.value.includes(role);
-    const hasAnyRole = (roleNames: string[]): boolean => roleNames.some(hasRole);
+    const hasAnyRole = (roleNames: string[]): boolean =>
+        roleNames.some(hasRole);
 
     return { auth, roles, permissions, can, hasRole, hasAnyRole };
 }

@@ -35,11 +35,16 @@ const sparkPoints = computed(() => {
 
 const sparkPath = computed(() =>
     sparkPoints.value
-        .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
+        .map(
+            (point, index) =>
+                `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`,
+        )
         .join(' '),
 );
 
-const lastPoint = computed(() => sparkPoints.value[sparkPoints.value.length - 1]);
+const lastPoint = computed(
+    () => sparkPoints.value[sparkPoints.value.length - 1],
+);
 </script>
 
 <template>
@@ -47,10 +52,14 @@ const lastPoint = computed(() => sparkPoints.value[sparkPoints.value.length - 1]
         <CardContent class="p-5">
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
-                    <p class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                    <p
+                        class="text-xs font-medium tracking-[0.16em] text-muted-foreground uppercase"
+                    >
                         {{ label }}
                     </p>
-                    <p class="mt-3 text-3xl font-semibold tracking-tight tabular-nums">
+                    <p
+                        class="mt-3 text-3xl font-semibold tracking-tight tabular-nums"
+                    >
                         {{ value }}
                     </p>
                 </div>
@@ -65,7 +74,9 @@ const lastPoint = computed(() => sparkPoints.value[sparkPoints.value.length - 1]
                 <div class="flex min-w-0 items-center gap-1.5 text-xs">
                     <span
                         class="inline-flex items-center"
-                        :class="trend === 'up' ? 'text-chart-1' : 'text-destructive'"
+                        :class="
+                            trend === 'up' ? 'text-chart-1' : 'text-destructive'
+                        "
                         aria-hidden="true"
                     >
                         <component
@@ -74,13 +85,17 @@ const lastPoint = computed(() => sparkPoints.value[sparkPoints.value.length - 1]
                         />
                     </span>
                     <span class="font-medium tabular-nums">{{ change }}</span>
-                    <span class="truncate text-muted-foreground">{{ detail }}</span>
+                    <span class="truncate text-muted-foreground">{{
+                        detail
+                    }}</span>
                 </div>
 
                 <svg
                     viewBox="0 0 80 32"
                     class="h-8 w-20 shrink-0 overflow-visible"
-                    :class="trend === 'up' ? 'text-chart-1' : 'text-destructive'"
+                    :class="
+                        trend === 'up' ? 'text-chart-1' : 'text-destructive'
+                    "
                     role="img"
                     :aria-label="`${label} trend`"
                 >
@@ -92,7 +107,12 @@ const lastPoint = computed(() => sparkPoints.value[sparkPoints.value.length - 1]
                         stroke-linecap="round"
                         stroke-linejoin="round"
                     />
-                    <circle :cx="lastPoint.x" :cy="lastPoint.y" r="2.5" fill="currentColor" />
+                    <circle
+                        :cx="lastPoint.x"
+                        :cy="lastPoint.y"
+                        r="2.5"
+                        fill="currentColor"
+                    />
                 </svg>
             </div>
         </CardContent>

@@ -72,7 +72,9 @@ const statusVariant = (status: OrderStatus): StatusVariant => {
 };
 
 const statusClass = (status: OrderStatus) =>
-    status === 'Refunded' ? 'gap-1.5 border-destructive/40 text-foreground' : 'gap-1.5';
+    status === 'Refunded'
+        ? 'gap-1.5 border-destructive/40 text-foreground'
+        : 'gap-1.5';
 </script>
 
 <template>
@@ -82,7 +84,9 @@ const statusClass = (status: OrderStatus) =>
         >
             <div class="space-y-1">
                 <CardTitle class="text-base">Recent orders</CardTitle>
-                <CardDescription>Latest transactions across all channels.</CardDescription>
+                <CardDescription
+                    >Latest transactions across all channels.</CardDescription
+                >
             </div>
             <Button variant="outline" size="sm" class="gap-1.5">
                 View all
@@ -95,12 +99,18 @@ const statusClass = (status: OrderStatus) =>
                 <table class="w-full min-w-[520px] text-sm">
                     <thead>
                         <tr
-                            class="border-b text-left text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
+                            class="border-b text-left text-[11px] tracking-[0.14em] text-muted-foreground uppercase"
                         >
                             <th class="px-5 py-2.5 font-medium">Order</th>
-                            <th class="hidden px-5 py-2.5 font-medium md:table-cell">Customer</th>
+                            <th
+                                class="hidden px-5 py-2.5 font-medium md:table-cell"
+                            >
+                                Customer
+                            </th>
                             <th class="px-5 py-2.5 font-medium">Status</th>
-                            <th class="px-5 py-2.5 text-right font-medium">Total</th>
+                            <th class="px-5 py-2.5 text-right font-medium">
+                                Total
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="divide-y">
@@ -110,12 +120,18 @@ const statusClass = (status: OrderStatus) =>
                             class="transition-colors hover:bg-muted/40"
                         >
                             <td class="px-5 py-3">
-                                <p class="font-medium tabular-nums">{{ order.id }}</p>
-                                <p class="text-xs text-muted-foreground">{{ order.date }}</p>
+                                <p class="font-medium tabular-nums">
+                                    {{ order.id }}
+                                </p>
+                                <p class="text-xs text-muted-foreground">
+                                    {{ order.date }}
+                                </p>
                             </td>
                             <td class="hidden px-5 py-3 md:table-cell">
                                 <p class="font-medium">{{ order.customer }}</p>
-                                <p class="text-xs text-muted-foreground">{{ order.email }}</p>
+                                <p class="text-xs text-muted-foreground">
+                                    {{ order.email }}
+                                </p>
                             </td>
                             <td class="px-5 py-3">
                                 <Badge
@@ -130,7 +146,9 @@ const statusClass = (status: OrderStatus) =>
                                     {{ order.status }}
                                 </Badge>
                             </td>
-                            <td class="px-5 py-3 text-right font-medium tabular-nums">
+                            <td
+                                class="px-5 py-3 text-right font-medium tabular-nums"
+                            >
                                 {{ order.amount }}
                             </td>
                         </tr>

@@ -10,7 +10,7 @@ use Spatie\Permission\PermissionRegistrar;
 
 class RolePermissionSeeder extends Seeder
 {
-    /**
+   /**
      * @var list<string>
      */
     private array $permissions = [
@@ -71,19 +71,27 @@ class RolePermissionSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
+        // Create permissions.
         foreach ($this->permissions as $permission) {
             Permission::findOrCreate($permission, 'web');
         }
 
+        // Create roles and synchronize permissions.
         foreach ($this->roles as $roleName => $permissions) {
-            Role::findOrCreate($roleName, 'web')->syncPermissions($permissions);
+            $role = Role::findOrCreate($roleName, 'web');
+
+            $role->syncPermissions($permissions);
         }
 
-        if (! User::query()->whereHas('roles')->exists()) {
+        // Assign default roles only if no user has a role.
+        if (!User::query()->whereHas('roles')->exists()) {
             $users = User::query()->orderBy('id')->get();
 
             $users->first()?->assignRole('super-admin');
-            $users->skip(1)->each(fn (User $user) => $user->assignRole('viewer'));
+
+            $users->skip(1)->each(
+                fn (User $user) => $user->assignRole('viewer')
+            );
         }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();

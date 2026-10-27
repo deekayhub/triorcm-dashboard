@@ -31,8 +31,12 @@ const labels = [
     'Dec',
 ];
 
-const current = [18.4, 22.1, 20.8, 26.4, 24.9, 31.2, 29.7, 35.6, 33.2, 39.8, 37.4, 48.3];
-const previous = [14.2, 16.8, 18.5, 19.1, 21.7, 23.4, 22.9, 26.8, 28.4, 30.2, 31.6, 35.1];
+const current = [
+    18.4, 22.1, 20.8, 26.4, 24.9, 31.2, 29.7, 35.6, 33.2, 39.8, 37.4, 48.3,
+];
+const previous = [
+    14.2, 16.8, 18.5, 19.1, 21.7, 23.4, 22.9, 26.8, 28.4, 30.2, 31.6, 35.1,
+];
 
 const maxValue = 60;
 const width = 720;
@@ -42,8 +46,10 @@ const plotWidth = width - padding.left - padding.right;
 const plotHeight = height - padding.top - padding.bottom;
 const baseline = padding.top + plotHeight;
 
-const toX = (index: number) => padding.left + (index * plotWidth) / (labels.length - 1);
-const toY = (value: number) => padding.top + plotHeight - (value / maxValue) * plotHeight;
+const toX = (index: number) =>
+    padding.left + (index * plotWidth) / (labels.length - 1);
+const toY = (value: number) =>
+    padding.top + plotHeight - (value / maxValue) * plotHeight;
 
 const toPoints = (values: number[]): Point[] =>
     values.map((value, index) => ({ x: toX(index), y: toY(value), value }));
@@ -83,7 +89,9 @@ const gridLines = [0, 15, 30, 45, 60].map((value) => ({
 }));
 
 const active = ref<number | null>(null);
-const activePoint = computed(() => (active.value === null ? null : currentPoints[active.value] ?? null));
+const activePoint = computed(() =>
+    active.value === null ? null : (currentPoints[active.value] ?? null),
+);
 const activeLabel = computed(() =>
     active.value === null ? labels[labels.length - 1] : labels[active.value],
 );
@@ -97,36 +105,61 @@ const activeValue = computed(() => activePoint.value?.value ?? lastPoint.value);
         >
             <div class="space-y-1">
                 <CardTitle class="text-base">Revenue</CardTitle>
-                <CardDescription>Gross revenue over the last 12 months.</CardDescription>
+                <CardDescription
+                    >Gross revenue over the last 12 months.</CardDescription
+                >
             </div>
             <div class="flex items-center gap-4 text-xs text-muted-foreground">
                 <span class="flex items-center gap-1.5">
-                    <span class="size-2 rounded-full bg-chart-1" aria-hidden="true" />
+                    <span
+                        class="size-2 rounded-full bg-chart-1"
+                        aria-hidden="true"
+                    />
                     This year
                 </span>
                 <span class="flex items-center gap-1.5">
-                    <span class="w-4 border-t border-dashed border-muted-foreground" aria-hidden="true" />
+                    <span
+                        class="w-4 border-t border-dashed border-muted-foreground"
+                        aria-hidden="true"
+                    />
                     Last year
                 </span>
             </div>
         </CardHeader>
 
-        <CardContent class="px-5 pb-5 pt-4">
+        <CardContent class="px-5 pt-4 pb-5">
             <div class="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                    <p class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                    <p
+                        class="text-xs font-medium tracking-[0.16em] text-muted-foreground uppercase"
+                    >
                         Year to date
                     </p>
-                    <p class="mt-1 text-2xl font-semibold tracking-tight tabular-nums">$391.6k</p>
+                    <p
+                        class="mt-1 text-2xl font-semibold tracking-tight tabular-nums"
+                    >
+                        $391.6k
+                    </p>
                 </div>
-                <Badge variant="secondary" class="gap-1 font-medium tabular-nums">
-                    <ArrowUpRight class="size-3.5 text-chart-1" aria-hidden="true" />
+                <Badge
+                    variant="secondary"
+                    class="gap-1 font-medium tabular-nums"
+                >
+                    <ArrowUpRight
+                        class="size-3.5 text-chart-1"
+                        aria-hidden="true"
+                    />
                     18.2% vs last year
                 </Badge>
             </div>
 
-            <div class="mt-2 flex h-5 items-center gap-1.5 text-xs text-muted-foreground">
-                <span class="size-1.5 rounded-full bg-chart-1" aria-hidden="true" />
+            <div
+                class="mt-2 flex h-5 items-center gap-1.5 text-xs text-muted-foreground"
+            >
+                <span
+                    class="size-1.5 rounded-full bg-chart-1"
+                    aria-hidden="true"
+                />
                 <span v-if="activePoint" class="tabular-nums">
                     {{ activeLabel }} · ${{ activeValue.toFixed(1) }}k
                 </span>
@@ -145,9 +178,23 @@ const activeValue = computed(() => activePoint.value?.value ?? lastPoint.value);
                     </title>
 
                     <defs>
-                        <linearGradient id="revenue-fill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="currentColor" stop-opacity="0.22" />
-                            <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+                        <linearGradient
+                            id="revenue-fill"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                        >
+                            <stop
+                                offset="0%"
+                                stop-color="currentColor"
+                                stop-opacity="0.22"
+                            />
+                            <stop
+                                offset="100%"
+                                stop-color="currentColor"
+                                stop-opacity="0"
+                            />
                         </linearGradient>
                     </defs>
 
@@ -212,7 +259,11 @@ const activeValue = computed(() => activePoint.value?.value ?? lastPoint.value);
                         class="text-chart-1"
                     >
                         <circle r="4.5" fill="currentColor" />
-                        <circle r="2" fill="currentColor" class="text-background" />
+                        <circle
+                            r="2"
+                            fill="currentColor"
+                            class="text-background"
+                        />
                     </g>
 
                     <text
@@ -225,7 +276,10 @@ const activeValue = computed(() => activePoint.value?.value ?? lastPoint.value);
                         Dec · $48.3k
                     </text>
 
-                    <g v-if="activePoint" :transform="`translate(${activePoint.x}, ${activePoint.y})`">
+                    <g
+                        v-if="activePoint"
+                        :transform="`translate(${activePoint.x}, ${activePoint.y})`"
+                    >
                         <line
                             :y1="0"
                             :y2="baseline - activePoint.y"
@@ -234,11 +288,22 @@ const activeValue = computed(() => activePoint.value?.value ?? lastPoint.value);
                             stroke-dasharray="3 4"
                             class="text-chart-1/40"
                         />
-                        <circle r="5" fill="currentColor" class="text-chart-1" />
-                        <circle r="2" fill="currentColor" class="text-background" />
+                        <circle
+                            r="5"
+                            fill="currentColor"
+                            class="text-chart-1"
+                        />
+                        <circle
+                            r="2"
+                            fill="currentColor"
+                            class="text-background"
+                        />
                     </g>
 
-                    <g v-for="(point, index) in currentPoints" :key="`hit-${index}`">
+                    <g
+                        v-for="(point, index) in currentPoints"
+                        :key="`hit-${index}`"
+                    >
                         <circle
                             :cx="point.x"
                             :cy="point.y"
@@ -248,7 +313,11 @@ const activeValue = computed(() => activePoint.value?.value ?? lastPoint.value);
                             @pointerenter="active = index"
                             @pointerleave="active = null"
                         >
-                            <title>{{ labels[index] }}: ${{ point.value.toFixed(1) }}k</title>
+                            <title>
+                                {{ labels[index] }}: ${{
+                                    point.value.toFixed(1)
+                                }}k
+                            </title>
                         </circle>
                     </g>
                 </svg>

@@ -2,7 +2,13 @@
 import { computed, ref } from 'vue';
 import type { Component } from 'vue';
 import { Head } from '@inertiajs/vue3';
-import { DollarSign, Download, Percent, ShoppingCart, Users } from '@lucide/vue';
+import {
+    DollarSign,
+    Download,
+    Percent,
+    ShoppingCart,
+    Users,
+} from '@lucide/vue';
 import KpiCard from '@/components/dashboard/KpiCard.vue';
 import RecentOrders from '@/components/dashboard/RecentOrders.vue';
 import RevenueChart from '@/components/dashboard/RevenueChart.vue';
@@ -81,7 +87,9 @@ const ranges = [
 
 const selectedRange = ref('30d');
 const rangeLabel = computed(
-    () => ranges.find((range) => range.value === selectedRange.value)?.label ?? '30 days',
+    () =>
+        ranges.find((range) => range.value === selectedRange.value)?.label ??
+        '30 days',
 );
 
 const { can } = usePermissions();
@@ -91,20 +99,32 @@ const { can } = usePermissions();
     <Head title="Dashboard" />
 
     <div class="flex h-full flex-1 flex-col gap-5 overflow-x-clip p-4 md:p-6">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div
+            class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+        >
             <div class="space-y-1.5">
                 <div class="flex items-center gap-2">
-                    <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    <p
+                        class="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase"
+                    >
                         Dashboard
                     </p>
-                    <span class="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                        <span class="size-1.5 rounded-full bg-chart-1" aria-hidden="true" />
+                    <span
+                        class="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground"
+                    >
+                        <span
+                            class="size-1.5 rounded-full bg-chart-1"
+                            aria-hidden="true"
+                        />
                         Live
                     </span>
                 </div>
-                <h1 class="text-2xl font-semibold tracking-tight">Performance overview</h1>
+                <h1 class="text-2xl font-semibold tracking-tight">
+                    Performance overview
+                </h1>
                 <p class="text-sm text-muted-foreground">
-                    Revenue, acquisition, and orders for the last {{ rangeLabel }}.
+                    Revenue, acquisition, and orders for the last
+                    {{ rangeLabel }}.
                 </p>
             </div>
 
@@ -121,7 +141,7 @@ const { can } = usePermissions();
                         :aria-pressed="selectedRange === range.value"
                         :class="
                             cn(
-                                'rounded px-2.5 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95',
+                                'rounded px-2.5 py-1 text-xs font-medium transition focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none active:scale-95',
                                 selectedRange === range.value
                                     ? 'bg-background text-foreground shadow-sm'
                                     : 'text-muted-foreground hover:text-foreground',

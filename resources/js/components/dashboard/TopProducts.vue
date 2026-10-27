@@ -47,7 +47,9 @@ const products = [
         >
             <div class="space-y-1">
                 <CardTitle class="text-base">Top products</CardTitle>
-                <CardDescription>Best sellers by revenue this month.</CardDescription>
+                <CardDescription
+                    >Best sellers by revenue this month.</CardDescription
+                >
             </div>
             <Badge variant="outline" class="font-normal">Top 4</Badge>
         </CardHeader>
@@ -62,14 +64,17 @@ const products = [
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex min-w-0 items-start gap-3">
                             <span
-                                class="mt-0.5 w-4 shrink-0 text-xs font-medium tabular-nums text-muted-foreground"
+                                class="mt-0.5 w-4 shrink-0 text-xs font-medium text-muted-foreground tabular-nums"
                             >
                                 {{ String(index + 1).padStart(2, '0') }}
                             </span>
                             <div class="min-w-0">
-                                <p class="truncate text-sm font-medium">{{ product.name }}</p>
+                                <p class="truncate text-sm font-medium">
+                                    {{ product.name }}
+                                </p>
                                 <p class="text-xs text-muted-foreground">
-                                    {{ product.category }} · {{ product.units }} units
+                                    {{ product.category }} ·
+                                    {{ product.units }} units
                                 </p>
                             </div>
                         </div>

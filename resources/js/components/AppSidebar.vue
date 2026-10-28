@@ -7,7 +7,7 @@ import {
     FolderGit2,
     LayoutGrid,
     ShieldCheck,
-    Users as UsersIcon,
+    Users as TeamsIcon,
 } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -42,9 +42,9 @@ const mainNavItems = computed<NavItem[]>(() => {
 
     if (can('users.view')) {
         items.push({
-            title: 'Users',
+            title: 'Teams',
             href: usersIndex(),
-            icon: UsersIcon,
+            icon: TeamsIcon,
         });
     }
 

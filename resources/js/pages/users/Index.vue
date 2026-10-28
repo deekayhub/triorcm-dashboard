@@ -1,7 +1,7 @@
 ﻿<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Form, Head } from '@inertiajs/vue3';
-import { Plus, Search, ShieldCheck, Users as UsersIcon } from '@lucide/vue';
+import { Plus, Search, ShieldCheck, Users as TeamsIcon } from '@lucide/vue';
 import UserController from '@/actions/App/Http/Controllers/UserController';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
@@ -50,7 +50,7 @@ defineOptions({
     layout: {
         breadcrumbs: [
             {
-                title: 'Users',
+                title: 'Teams',
                 href: usersIndex(),
             },
         ],
@@ -143,9 +143,9 @@ const formatDate = (value: string | null): string => {
                         Team
                     </span>
                 </div>
-                <h1 class="text-2xl font-semibold tracking-tight">Users</h1>
+                <h1 class="text-2xl font-semibold tracking-tight">Teams</h1>
                 <p class="text-sm text-muted-foreground">
-                    Manage team members and assign their access level.
+                    Manage team members and assign roles.
                 </p>
             </div>
 

@@ -23,9 +23,25 @@ Route::middleware(['auth', 'verified', 'permission:dashboard.view'])->group(func
         ->middleware('role:super-admin')
         ->name('users.store');
 
+    Route::put('users/{user}', [UserController::class, 'update'])
+        ->middleware('role:super-admin')
+        ->name('users.update');
+
+    Route::patch('users/{user}', [UserController::class, 'update'])
+        ->middleware('role:super-admin')
+        ->name('users.update.patch');
+
+    Route::delete('users/{user}', [UserController::class, 'destroy'])
+        ->middleware('role:super-admin')
+        ->name('users.destroy');
+
     Route::get('roles', [RoleController::class, 'index'])
         ->middleware('permission:roles.view')
         ->name('roles.index');
+
+    Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])
+        ->middleware('permission:activity-logs.view')
+        ->name('activity-logs.index');
 });
 
 require __DIR__.'/settings.php';

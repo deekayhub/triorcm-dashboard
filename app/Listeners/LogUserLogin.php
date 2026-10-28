@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Listeners;
+
+use Illuminate\Auth\Events\Login;
+
+class LogUserLogin
+{
+    public function handle(Login $event): void
+    {
+        activity()
+            ->causedBy($event->user)
+            ->event('login')
+            ->withProperties([
+                'ip' => request()?->ip(),
+                'user_agent' => request()?->userAgent(),
+            ])
+            ->log('User logged in');
+    }
+}

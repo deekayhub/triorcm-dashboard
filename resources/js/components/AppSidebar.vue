@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import {
+    Activity,
     BookOpen,
     FolderGit2,
     LayoutGrid,
@@ -23,6 +24,7 @@ import {
 } from '@/components/ui/sidebar';
 import { usePermissions } from '@/composables/usePermissions';
 import { dashboard } from '@/routes';
+import { index as activityLogsIndex } from '@/routes/activity-logs';
 import { index as rolesIndex } from '@/routes/roles';
 import { index as usersIndex } from '@/routes/users';
 import type { NavItem } from '@/types';
@@ -51,6 +53,14 @@ const mainNavItems = computed<NavItem[]>(() => {
             title: 'Roles & permissions',
             href: rolesIndex(),
             icon: ShieldCheck,
+        });
+    }
+
+    if (can('activity-logs.view')) {
+        items.push({
+            title: 'Activity Logs',
+            href: activityLogsIndex(),
+            icon: Activity,
         });
     }
 

@@ -24,6 +24,7 @@ class RolePermissionSeeder extends Seeder
         'roles.view',
         'roles.manage',
         'settings.manage',
+        'activity-logs.view',
     ];
 
     /**
@@ -41,6 +42,7 @@ class RolePermissionSeeder extends Seeder
             'roles.view',
             'roles.manage',
             'settings.manage',
+            'activity-logs.view',
         ],
         'admin' => [
             'dashboard.view',
@@ -53,6 +55,7 @@ class RolePermissionSeeder extends Seeder
             'roles.view',
             'roles.manage',
             'settings.manage',
+            'activity-logs.view',
         ],
         'manager' => [
             'dashboard.view',

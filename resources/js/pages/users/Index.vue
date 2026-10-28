@@ -1,7 +1,22 @@
 ﻿<script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { Form, Head } from '@inertiajs/vue3';
-import { Plus, Search, ShieldCheck, Users as TeamsIcon } from '@lucide/vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { Form, Head, router } from '@inertiajs/vue3';
+import {
+    ChevronLeft,
+    ChevronRight,
+    Eye,
+    MoreHorizontal,
+    Pencil,
+    Plus,
+    Search,
+    ShieldCheck,
+    Trash2,
+    Users as TeamsIcon,
+} from '@lucide/vue';
+import DataTable from 'datatables.net-vue3';
+import DataTablesCore from 'datatables.net-dt';
+import 'datatables.net-dt/css/dataTables.dataTables.css';
+import $ from 'jquery';
 import UserController from '@/actions/App/Http/Controllers/UserController';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
@@ -25,12 +40,22 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { useInitials } from '@/composables/useInitials';
 import { usePermissions } from '@/composables/usePermissions';
 import { index as usersIndex } from '@/routes/users';
+
+DataTable.use(DataTablesCore);
+$.fn.dataTable = DataTablesCore;
 
 type UserRow = {
     id: number;
@@ -41,9 +66,31 @@ type UserRow = {
     roles: string[];
 };
 
+type PaginationLink = {
+    url: string | null;
+    label: string;
+    active: boolean;
+};
+
+type PaginatedUsers = {
+    data: UserRow[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    from: number | null;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+};
+
 const props = defineProps<{
-    users: UserRow[];
+    users: PaginatedUsers;
     roles: string[];
+    filters: {
+        search: string;
+        role: string;
+        per_page: number;
+    };
 }>();
 
 defineOptions({
@@ -61,32 +108,47 @@ const { getInitials } = useInitials();
 const { hasRole } = usePermissions();
 const isSuperAdmin = computed(() => hasRole('super-admin'));
 
-const search = ref('');
-const roleFilter = ref('all');
+const search = ref(props.filters.search ?? '');
+const roleFilter = ref(props.filters.role ?? 'all');
+const perPage = ref(String(props.filters.per_page ?? 10));
 
-const filteredUsers = computed(() => {
-    const query = search.value.trim().toLowerCase();
+let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    return props.users.filter((user) => {
-        const matchesQuery =
-            query === '' ||
-            user.name.toLowerCase().includes(query) ||
-            user.email.toLowerCase().includes(query);
+const applyFilters = () => {
+    router.get(
+        usersIndex(),
+        {
+            search: search.value || undefined,
+            role: roleFilter.value === 'all' ? undefined : roleFilter.value,
+            per_page: perPage.value,
+        },
+        {
+            preserveState: true,
+            replace: true,
+            preserveScroll: true,
+        },
+    );
+};
 
-        const matchesRole =
-            roleFilter.value === 'all' || user.roles.includes(roleFilter.value);
-
-        return matchesQuery && matchesRole;
-    });
+watch(search, () => {
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+    searchTimeout = setTimeout(applyFilters, 400);
 });
 
+watch(roleFilter, applyFilters);
+watch(perPage, applyFilters);
+
+const userRows = computed(() => props.users.data);
+
 const verifiedCount = computed(
-    () => props.users.filter((user) => user.email_verified_at !== null).length,
+    () => userRows.value.filter((user) => user.email_verified_at !== null).length,
 );
 
 const superAdminCount = computed(
     () =>
-        props.users.filter((user) => user.roles.includes('super-admin')).length,
+        userRows.value.filter((user) => user.roles.includes('super-admin')).length,
 );
 
 const defaultRole = props.roles.includes('viewer')
@@ -104,7 +166,38 @@ watch(createOpen, (open) => {
 
 const handleCreated = (): void => {
     createOpen.value = false;
+    router.reload({ only: ['users'] });
 };
+
+const editOpen = ref(false);
+const editUser = ref<UserRow | null>(null);
+const editRole = ref(defaultRole);
+
+const openEdit = (user: UserRow) => {
+    editUser.value = user;
+    editRole.value = user.roles?.[0] ?? defaultRole;
+    editOpen.value = true;
+};
+
+watch(editOpen, (open) => {
+    if (!open) {
+        editUser.value = null;
+    }
+});
+
+const deleteOpen = ref(false);
+const deleteUser = ref<UserRow | null>(null);
+
+const openDelete = (user: UserRow) => {
+    deleteUser.value = user;
+    deleteOpen.value = true;
+};
+
+watch(deleteOpen, (open) => {
+    if (!open) {
+        deleteUser.value = null;
+    }
+});
 
 const formatDate = (value: string | null): string => {
     if (value === null) {
@@ -117,6 +210,84 @@ const formatDate = (value: string | null): string => {
         year: 'numeric',
     }).format(new Date(value));
 };
+
+const goToPage = (url: string | null) => {
+    if (!url) {
+        return;
+    }
+    router.visit(url, { preserveScroll: true, preserveState: true });
+};
+
+const dtColumns = [
+    { data: 'user', name: 'user', orderable: true },
+    { data: 'roles', name: 'roles', orderable: false },
+    { data: 'status', name: 'status', orderable: false },
+    { data: 'joined', name: 'created_at', orderable: true },
+    ...(isSuperAdmin.value ? [{ data: 'actions', name: 'actions', orderable: false }] : []),
+];
+
+const dtOptions = computed(() => ({
+    serverSide: true,
+    processing: true,
+    ajax: {
+        url: usersIndex().url,
+        type: 'GET',
+        data: (d: any) => {
+            d.role = roleFilter.value === 'all' ? 'all' : roleFilter.value;
+        },
+    },
+    columns: dtColumns,
+    order: [[3, 'desc']],
+    pageLength: Number(perPage.value),
+    layout: {
+        topStart: null,
+        topEnd: null,
+        bottomStart: 'info',
+        bottomEnd: 'paging',
+    },
+    language: {
+        search: '',
+        searchPlaceholder: 'Search...',
+        processing: 'Loading...',
+        emptyTable: 'No users found',
+        info: 'Showing _START_ to _END_ of _TOTAL_ users',
+        infoEmpty: 'Showing 0 to 0 of 0 users',
+        paginate: {
+            previous: '‹',
+            next: '›',
+            first: '«',
+            last: '»',
+        },
+    },
+    pagingType: 'simple_numbers',
+}));
+
+const dtTable = ref<any>(null);
+
+onMounted(() => {
+    if (search.value) {
+        dtTable.value?.dt()?.search(search.value).draw();
+    }
+});
+
+watch(search, (val) => {
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+    searchTimeout = setTimeout(() => {
+        dtTable.value?.dt()?.search(val).draw();
+        applyFilters();
+    }, 400);
+});
+
+watch(roleFilter, () => {
+    dtTable.value?.dt()?.ajax?.reload?.();
+});
+
+watch(perPage, () => {
+    dtTable.value?.dt()?.page.len(Number(perPage.value)).draw();
+    applyFilters();
+});
 </script>
 
 <template>
@@ -149,83 +320,81 @@ const formatDate = (value: string | null): string => {
                 </p>
             </div>
 
-            <Dialog v-model:open="createOpen">
-                <DialogTrigger v-if="isSuperAdmin" as-child>
-                    <Button class="gap-2">
-                        <Plus class="size-4" aria-hidden="true" />
-                        Create user
-                    </Button>
-                </DialogTrigger>
-
+            <div v-if="isSuperAdmin">
+                <Button
+                    class="gap-2"
+                    @click="router.visit('/users/create')"
+                >
+                    <Plus class="size-4" aria-hidden="true" />
+                    Add team member
+                </Button>
+            </div>
+            <Dialog v-model:open="editOpen">
                 <DialogContent class="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Create user</DialogTitle>
+                        <DialogTitle>Edit user</DialogTitle>
                         <DialogDescription>
-                            Add a team member and choose the role they should
-                            have.
+                            Update user details and role.
                         </DialogDescription>
                     </DialogHeader>
 
                     <Form
-                        v-bind="UserController.store.form()"
-                        :reset-on-success="[
-                            'name',
-                            'email',
-                            'password',
-                            'password_confirmation',
-                        ]"
+                        v-if="editUser"
+                        v-bind="UserController.update.form(editUser.id)"
+                        :reset-on-success="['password', 'password_confirmation']"
                         class="space-y-4"
                         v-slot="{ errors, processing }"
-                        @success="handleCreated"
+                        @success="
+                            editOpen = false;
+                            router.reload({ only: ['users'] });
+                        "
                     >
                         <div class="grid gap-2">
-                            <Label for="create-name">Name</Label>
+                            <Label for="edit-name">Name</Label>
                             <Input
-                                id="create-name"
+                                id="edit-name"
                                 name="name"
                                 type="text"
                                 required
+                                :default-value="editUser.name"
                                 autocomplete="name"
-                                placeholder="Full name"
                             />
                             <InputError :message="errors.name" />
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="create-email">Email address</Label>
+                            <Label for="edit-email">Email address</Label>
                             <Input
-                                id="create-email"
+                                id="edit-email"
                                 name="email"
                                 type="email"
                                 required
+                                :default-value="editUser.email"
                                 autocomplete="email"
-                                placeholder="email@example.com"
                             />
                             <InputError :message="errors.email" />
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="create-password">Password</Label>
+                            <Label for="edit-password">New password</Label>
                             <PasswordInput
-                                id="create-password"
+                                id="edit-password"
                                 name="password"
-                                required
                                 autocomplete="new-password"
-                                placeholder="Minimum 8 characters"
+                                placeholder="Leave blank to keep current"
                             />
                             <InputError :message="errors.password" />
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="create-password-confirmation">
-                                Confirm password
+                            <Label for="edit-password-confirmation">
+                                Confirm new password
                             </Label>
                             <PasswordInput
-                                id="create-password-confirmation"
+                                id="edit-password-confirmation"
                                 name="password_confirmation"
-                                required
                                 autocomplete="new-password"
-                                placeholder="Repeat the password"
+                                placeholder="Leave blank to keep current"
                             />
                             <InputError
                                 :message="errors.password_confirmation"
@@ -233,10 +402,10 @@ const formatDate = (value: string | null): string => {
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="create-role">Role</Label>
+                            <Label for="edit-role">Role</Label>
                             <select
-                                id="create-role"
-                                v-model="selectedRole"
+                                id="edit-role"
+                                v-model="editRole"
                                 name="role"
                                 required
                                 class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
@@ -260,10 +429,45 @@ const formatDate = (value: string | null): string => {
                             </DialogClose>
                             <Button type="submit" :disabled="processing">
                                 <Spinner v-if="processing" />
-                                Create user
+                                Save changes
                             </Button>
                         </DialogFooter>
                     </Form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog v-model:open="deleteOpen">
+                <DialogContent class="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Delete user</DialogTitle>
+                        <DialogDescription>
+                            This action cannot be undone. This will permanently
+                            remove
+                            <span class="font-medium text-foreground">{{
+                                deleteUser?.name
+                            }}</span>
+                            from the team.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter class="pt-2">
+                        <DialogClose as-child>
+                            <Button type="button" variant="outline">
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <Form
+                            v-if="deleteUser"
+                            v-bind="UserController.destroy.form(deleteUser.id)"
+                            @success="
+                                deleteOpen = false;
+                                router.reload({ only: ['users'] });
+                            "
+                        >
+                            <Button type="submit" variant="destructive">
+                                Delete user
+                            </Button>
+                        </Form>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
@@ -360,129 +564,168 @@ const formatDate = (value: string | null): string => {
                             {{ role }}
                         </option>
                     </select>
+
+                    <select
+                        v-model="perPage"
+                        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:w-auto"
+                        aria-label="Rows per page"
+                    >
+                        <option value="10">10 / page</option>
+                        <option value="25">25 / page</option>
+                        <option value="50">50 / page</option>
+                        <option value="100">100 / page</option>
+                    </select>
                 </div>
             </CardHeader>
 
             <CardContent class="px-0">
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[720px] text-sm">
+                <div class="px-5 pb-4">
+                    <DataTable
+                        ref="dtTable"
+                        :columns="dtColumns"
+                        :options="dtOptions"
+                        class="w-full text-sm"
+                    >
                         <thead>
                             <tr
                                 class="border-b text-left text-[11px] tracking-[0.14em] text-muted-foreground uppercase"
                             >
-                                <th class="px-5 py-2.5 font-medium">User</th>
-                                <th class="px-5 py-2.5 font-medium">Roles</th>
-                                <th class="px-5 py-2.5 font-medium">Status</th>
-                                <th class="px-5 py-2.5 font-medium">Joined</th>
+                                <th class="px-0 py-2.5 font-medium">User</th>
+                                <th class="px-0 py-2.5 font-medium">Roles</th>
+                                <th class="px-0 py-2.5 font-medium">Status</th>
+                                <th class="px-0 py-2.5 font-medium">Joined</th>
+                                <th
+                                    v-if="isSuperAdmin"
+                                    class="px-0 py-2.5 text-right font-medium"
+                                >
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y">
-                            <tr
-                                v-for="user in filteredUsers"
-                                :key="user.id"
-                                class="transition-colors hover:bg-muted/40"
-                            >
-                                <td class="px-5 py-3">
-                                    <div class="flex items-center gap-3">
-                                        <Avatar class="size-8">
-                                            <AvatarFallback
-                                                class="bg-muted text-xs font-semibold"
-                                            >
-                                                {{ getInitials(user.name) }}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div class="min-w-0">
-                                            <p class="truncate font-medium">
-                                                {{ user.name }}
-                                            </p>
-                                            <p
-                                                class="truncate text-xs text-muted-foreground"
-                                            >
-                                                {{ user.email }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <td class="px-5 py-3">
-                                    <div class="flex flex-wrap gap-1.5">
-                                        <Badge
-                                            v-for="role in user.roles"
-                                            :key="role"
-                                            :variant="
-                                                role === 'super-admin'
-                                                    ? 'default'
-                                                    : 'secondary'
-                                            "
-                                        >
-                                            {{ role }}
-                                        </Badge>
-                                        <Badge
-                                            v-if="user.roles.length === 0"
-                                            variant="outline"
-                                        >
-                                            No role
-                                        </Badge>
-                                    </div>
-                                </td>
-
-                                <td class="px-5 py-3">
-                                    <Badge
-                                        :variant="
-                                            user.email_verified_at
-                                                ? 'secondary'
-                                                : 'outline'
-                                        "
-                                        class="gap-1.5"
+                        <template #column-user="props">
+                            <div class="flex items-center gap-3 py-2">
+                                <Avatar class="size-8">
+                                    <AvatarFallback
+                                        class="bg-muted text-xs font-semibold"
                                     >
-                                        <span
-                                            :class="
-                                                user.email_verified_at
-                                                    ? 'bg-emerald-500'
-                                                    : 'bg-amber-500'
+                                        {{ getInitials(props.rowData.user.name) }}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div class="min-w-0">
+                                    <p class="truncate font-medium">
+                                        {{ props.rowData.user.name }}
+                                    </p>
+                                    <p class="truncate text-xs text-muted-foreground">
+                                        {{ props.rowData.user.email }}
+                                    </p>
+                                </div>
+                            </div>
+                        </template>
+                        <template #column-roles="props">
+                            <div class="flex flex-wrap gap-1.5">
+                                <Badge
+                                    v-for="role in props.rowData.roles"
+                                    :key="role"
+                                    :variant="
+                                        role === 'super-admin'
+                                            ? 'default'
+                                            : 'secondary'
+                                    "
+                                >
+                                    {{ role }}
+                                </Badge>
+                                <Badge
+                                    v-if="
+                                        !props.rowData.roles ||
+                                        props.rowData.roles.length === 0
+                                    "
+                                    variant="outline"
+                                >
+                                    No role
+                                </Badge>
+                            </div>
+                        </template>
+                        <template #column-status="props">
+                            <Badge
+                                :variant="
+                                    props.rowData.status === 'verified'
+                                        ? 'secondary'
+                                        : 'outline'
+                                "
+                                class="gap-1.5"
+                            >
+                                <span
+                                    :class="
+                                        props.rowData.status === 'verified'
+                                            ? 'bg-emerald-500'
+                                            : 'bg-amber-500'
+                                    "
+                                    class="size-1.5 rounded-full"
+                                    aria-hidden="true"
+                                />
+                                {{
+                                    props.rowData.status === 'verified'
+                                        ? 'Verified'
+                                        : 'Pending'
+                                }}
+                            </Badge>
+                        </template>
+                        <template #column-joined="props">
+                            <span class="text-muted-foreground tabular-nums">
+                                {{ formatDate(props.rowData.joined) }}
+                            </span>
+                        </template>
+                        <template v-if="isSuperAdmin" #column-actions="props">
+                            <div class="flex justify-end">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger as-child>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            class="size-8"
+                                        >
+                                            <MoreHorizontal class="size-4" />
+                                            <span class="sr-only"
+                                                >Open actions</span
+                                            >
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem
+                                            @click="router.visit(`/users/${props.rowData.id}/edit`)"
+                                        >
+                                            <Pencil class="mr-2 size-4" />
+                                            Edit
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            class="text-destructive focus:text-destructive"
+                                            @click="
+                                                openDelete({
+                                                    id: props.rowData.id,
+                                                    name: props.rowData.user.name,
+                                                    email: props.rowData.user.email,
+                                                    email_verified_at:
+                                                        props.rowData.status ===
+                                                        'verified'
+                                                            ? new Date().toISOString()
+                                                            : null,
+                                                    created_at:
+                                                        props.rowData.joined,
+                                                    roles: props.rowData.roles || [],
+                                                })
                                             "
-                                            class="size-1.5 rounded-full"
-                                            aria-hidden="true"
-                                        />
-                                        {{
-                                            user.email_verified_at
-                                                ? 'Verified'
-                                                : 'Pending'
-                                        }}
-                                    </Badge>
-                                </td>
-
-                                <td
-                                    class="px-5 py-3 text-muted-foreground tabular-nums"
-                                >
-                                    {{ formatDate(user.created_at) }}
-                                </td>
-                            </tr>
-
-                            <tr v-if="filteredUsers.length === 0">
-                                <td
-                                    colspan="4"
-                                    class="px-5 py-12 text-center text-sm text-muted-foreground"
-                                >
-                                    No users match your filters.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                        >
+                                            <Trash2 class="mr-2 size-4" />
+                                            Delete
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </template>
+                    </DataTable>
                 </div>
             </CardContent>
-
-            <div
-                class="flex items-center justify-between border-t px-5 py-2.5 text-xs text-muted-foreground"
-            >
-                <span>
-                    Showing {{ filteredUsers.length }} of {{ users.length }}
-                    users
-                </span>
-                <span v-if="isSuperAdmin"
-                    >You can create new team members.</span
-                >
-            </div>
         </Card>
     </div>
 </template>

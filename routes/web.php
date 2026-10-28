@@ -19,9 +19,17 @@ Route::middleware(['auth', 'verified', 'permission:dashboard.view'])->group(func
         ->middleware('permission:users.view')
         ->name('users.index');
 
+    Route::get('users/create', [UserController::class, 'create'])
+        ->middleware('role:super-admin')
+        ->name('users.create');
+
     Route::post('users', [UserController::class, 'store'])
         ->middleware('role:super-admin')
         ->name('users.store');
+
+    Route::get('users/{user}/edit', [UserController::class, 'edit'])
+        ->middleware('role:super-admin')
+        ->name('users.edit');
 
     Route::put('users/{user}', [UserController::class, 'update'])
         ->middleware('role:super-admin')

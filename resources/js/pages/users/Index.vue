@@ -4,11 +4,9 @@ import { Form, Head, router } from '@inertiajs/vue3';
 import {
     ChevronLeft,
     ChevronRight,
-    Eye,
     MoreHorizontal,
     Pencil,
     Plus,
-    Search,
     ShieldCheck,
     Trash2,
     Users as TeamsIcon,
@@ -91,6 +89,11 @@ const props = defineProps<{
         role: string;
         per_page: number;
     };
+    stats: {
+        total: number;
+        verified: number;
+        inactive: number;
+    };
 }>();
 
 defineOptions({
@@ -142,14 +145,9 @@ watch(perPage, applyFilters);
 
 const userRows = computed(() => props.users.data);
 
-const verifiedCount = computed(
-    () => userRows.value.filter((user) => user.email_verified_at !== null).length,
-);
-
-const superAdminCount = computed(
-    () =>
-        userRows.value.filter((user) => user.roles.includes('super-admin')).length,
-);
+const totalCount = computed(() => props.stats?.total ?? userRows.value.length);
+const verifiedCount = computed(() => props.stats?.verified ?? userRows.value.filter((user) => user.email_verified_at !== null).length);
+const inactiveCount = computed(() => props.stats?.inactive ?? userRows.value.filter((user) => user.email_verified_at === null).length);
 
 const defaultRole = props.roles.includes('viewer')
     ? 'viewer'
@@ -204,11 +202,12 @@ const formatDate = (value: string | null): string => {
         return '—';
     }
 
-    return new Intl.DateTimeFormat(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    }).format(new Date(value));
+    const date = new Date(value);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`;
 };
 
 const goToPage = (url: string | null) => {
@@ -239,15 +238,16 @@ const dtOptions = computed(() => ({
     columns: dtColumns,
     order: [[3, 'desc']],
     pageLength: Number(perPage.value),
+    lengthMenu: [10, 25, 50, 100],
     layout: {
-        topStart: null,
-        topEnd: null,
+        topStart: 'pageLength',
+        topEnd: 'search',
         bottomStart: 'info',
         bottomEnd: 'paging',
     },
     language: {
-        search: '',
-        searchPlaceholder: 'Search...',
+        search: 'Search:',
+        searchPlaceholder: 'Search name or email...',
         processing: 'Loading...',
         emptyTable: 'No users found',
         info: 'Showing _START_ to _END_ of _TOTAL_ users',
@@ -478,12 +478,12 @@ watch(perPage, () => {
                     <div
                         class="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground"
                     >
-                        <UsersIcon class="size-4" aria-hidden="true" />
+                        <TeamsIcon class="size-4" aria-hidden="true" />
                     </div>
                     <div>
-                        <p class="text-xs text-muted-foreground">Total users</p>
+                        <p class="text-xs text-muted-foreground">Total Teams</p>
                         <p class="text-xl font-semibold tabular-nums">
-                            {{ users.length }}
+                            {{ totalCount }}
                         </p>
                     </div>
                 </CardContent>
@@ -492,25 +492,7 @@ watch(perPage, () => {
             <Card class="gap-0 py-4 shadow-none">
                 <CardContent class="flex items-center gap-3 px-5">
                     <div
-                        class="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground"
-                    >
-                        <ShieldCheck class="size-4" aria-hidden="true" />
-                    </div>
-                    <div>
-                        <p class="text-xs text-muted-foreground">
-                            Super admins
-                        </p>
-                        <p class="text-xl font-semibold tabular-nums">
-                            {{ superAdminCount }}
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card class="gap-0 py-4 shadow-none">
-                <CardContent class="flex items-center gap-3 px-5">
-                    <div
-                        class="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+                        class="flex size-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600"
                     >
                         <span
                             class="size-2 rounded-full bg-emerald-500"
@@ -525,59 +507,28 @@ watch(perPage, () => {
                     </div>
                 </CardContent>
             </Card>
+
+            <Card class="gap-0 py-4 shadow-none">
+                <CardContent class="flex items-center gap-3 px-5">
+                    <div
+                        class="flex size-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600"
+                    >
+                        <span
+                            class="size-2 rounded-full bg-amber-500"
+                            aria-hidden="true"
+                        />
+                    </div>
+                    <div>
+                        <p class="text-xs text-muted-foreground">Inactive</p>
+                        <p class="text-xl font-semibold tabular-nums">
+                            {{ inactiveCount }}
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
 
         <Card class="gap-0 py-0 shadow-none">
-            <CardHeader
-                class="flex flex-col gap-4 border-b px-5 py-5 md:flex-row md:items-start md:justify-between"
-            >
-                <div class="space-y-1">
-                    <CardTitle class="text-base">Team directory</CardTitle>
-                    <CardDescription>
-                        Everyone with access to the dashboard.
-                    </CardDescription>
-                </div>
-
-                <div
-                    class="flex w-full flex-col gap-2 sm:flex-row md:w-auto md:items-center"
-                >
-                    <div class="relative w-full sm:w-64">
-                        <Search
-                            class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                            aria-hidden="true"
-                        />
-                        <Input
-                            v-model="search"
-                            type="search"
-                            class="pl-9"
-                            placeholder="Search name or email"
-                        />
-                    </div>
-
-                    <select
-                        v-model="roleFilter"
-                        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:w-auto"
-                        aria-label="Filter by role"
-                    >
-                        <option value="all">All roles</option>
-                        <option v-for="role in roles" :key="role" :value="role">
-                            {{ role }}
-                        </option>
-                    </select>
-
-                    <select
-                        v-model="perPage"
-                        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:w-auto"
-                        aria-label="Rows per page"
-                    >
-                        <option value="10">10 / page</option>
-                        <option value="25">25 / page</option>
-                        <option value="50">50 / page</option>
-                        <option value="100">100 / page</option>
-                    </select>
-                </div>
-            </CardHeader>
-
             <CardContent class="px-0">
                 <div class="px-5 pb-4">
                     <DataTable

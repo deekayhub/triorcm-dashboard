@@ -172,19 +172,22 @@
 }
 
 @layer components {
-    .dataTables_wrapper .dataTables_filter {
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dt-search {
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
-    .dataTables_wrapper .dataTables_filter label {
+    .dataTables_wrapper .dataTables_filter label,
+    .dataTables_wrapper .dt-search label {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         font-size: 0.75rem;
         color: hsl(var(--muted-foreground));
     }
-    .dataTables_wrapper .dataTables_filter input {
+    .dataTables_wrapper .dataTables_filter input,
+    .dataTables_wrapper .dt-search input {
         height: 2.25rem;
         border-radius: calc(var(--radius) - 2px);
         border: 1px solid hsl(var(--input));
@@ -193,26 +196,31 @@
         font-size: 0.875rem;
         color: hsl(var(--foreground));
     }
-    .dataTables_wrapper .dataTables_filter input::placeholder {
+    .dataTables_wrapper .dataTables_filter input::placeholder,
+    .dataTables_wrapper .dt-search input::placeholder {
         color: hsl(var(--muted-foreground));
     }
-    .dataTables_wrapper .dataTables_filter input:focus-visible {
+    .dataTables_wrapper .dataTables_filter input:focus-visible,
+    .dataTables_wrapper .dt-search input:focus-visible {
         outline: none;
         box-shadow: 0 0 0 2px hsl(var(--ring) / 0.5);
     }
-    .dataTables_wrapper .dataTables_length {
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dt-length {
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
-    .dataTables_wrapper .dataTables_length label {
+    .dataTables_wrapper .dataTables_length label,
+    .dataTables_wrapper .dt-length label {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         font-size: 0.75rem;
         color: hsl(var(--muted-foreground));
     }
-    .dataTables_wrapper .dataTables_length select {
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dt-length select {
         height: 2rem;
         border-radius: calc(var(--radius) - 2px);
         border: 1px solid hsl(var(--input));

@@ -22,7 +22,11 @@ class UserController extends Controller
     public function index(Request $request): Response|JsonResponse
     {
         if ($request->ajax() && $request->has('draw')) {
-            $query = User::query()->with('roles');
+            $query = User::query()
+                ->with('roles')
+                ->whereDoesntHave('roles', function ($q) {
+                    $q->where('name', 'super-admin');
+                });
 
             return DataTables::of($query)
                 ->addColumn('id', function (User $user) {
@@ -41,7 +45,7 @@ class UserController extends Controller
                     return $user->email_verified_at !== null ? 'verified' : 'pending';
                 })
                 ->addColumn('joined', function (User $user) {
-                    return $user->created_at?->toIso8601String();
+                    return $user->created_at?->format('d M Y');
                 })
                 ->addColumn('actions', function (User $user) {
                     return $user->id;
@@ -78,6 +82,9 @@ class UserController extends Controller
 
         $usersQuery = User::query()
             ->with('roles')
+            ->whereDoesntHave('roles', function ($query) {
+                $query->where('name', 'super-admin');
+            })
             ->orderBy('name');
 
         if ($search !== '') {
@@ -101,17 +108,32 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'email_verified_at' => $user->email_verified_at?->toIso8601String(),
-                'created_at' => $user->created_at?->toIso8601String(),
+                'created_at' => $user->created_at?->format('d M Y'),
                 'roles' => $user->roles->pluck('name')->sort()->values()->all(),
             ]);
 
+        $allTeamUsers = User::query()
+            ->with('roles')
+            ->whereDoesntHave('roles', function ($query) {
+                $query->where('name', 'super-admin');
+            })
+            ->get();
+
         return Inertia::render('users/Index', [
             'users' => $users,
-            'roles' => Role::query()->orderBy('name')->pluck('name'),
+            'roles' => Role::query()
+                ->where('name', '!=', 'super-admin')
+                ->orderBy('name')
+                ->pluck('name'),
             'filters' => [
                 'search' => $search,
                 'role' => $roleFilter,
                 'per_page' => $perPage,
+            ],
+            'stats' => [
+                'total' => $allTeamUsers->count(),
+                'verified' => $allTeamUsers->filter(fn ($u) => $u->email_verified_at !== null)->count(),
+                'inactive' => $allTeamUsers->filter(fn ($u) => $u->email_verified_at === null)->count(),
             ],
         ]);
     }
@@ -122,7 +144,10 @@ class UserController extends Controller
     public function create(): Response
     {
         return Inertia::render('users/Create', [
-            'roles' => Role::query()->orderBy('name')->pluck('name'),
+            'roles' => Role::query()
+                ->where('name', '!=', 'super-admin')
+                ->orderBy('name')
+                ->pluck('name'),
         ]);
     }
 
@@ -172,7 +197,10 @@ class UserController extends Controller
                 'email' => $user->email,
                 'roles' => $user->roles->pluck('name')->all(),
             ],
-            'roles' => Role::query()->orderBy('name')->pluck('name'),
+            'roles' => Role::query()
+                ->where('name', '!=', 'super-admin')
+                ->orderBy('name')
+                ->pluck('name'),
         ]);
     }
 

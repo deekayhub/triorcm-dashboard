@@ -76,7 +76,7 @@ const currentRole = props.user.roles[0] ?? (props.roles[0] ?? '');
                     </CardHeader>
                     <CardContent>
                         <Form
-                            v-bind="UserController.update.form(user.id)"
+                            v-bind="UserController.update['put /users/{user}']?.form(user.id)"
                             class="space-y-6"
                             v-slot="{ errors, processing }"
                         >

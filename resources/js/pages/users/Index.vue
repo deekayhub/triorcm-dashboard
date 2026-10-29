@@ -340,7 +340,8 @@ watch(perPage, () => {
 
                     <Form
                         v-if="editUser"
-                        v-bind="UserController.update.form(editUser.id)"
+                        :action="UserController.update.url(editUser.id)"
+                        method="put"
                         :reset-on-success="['password', 'password_confirmation']"
                         class="space-y-4"
                         v-slot="{ errors, processing }"

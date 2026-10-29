@@ -53,13 +53,14 @@ const formatDate = (date: string | null) => {
 
     const d = new Date(date);
     const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = monthNames[d.getMonth()];
     const year = d.getFullYear();
     const hour = String(d.getHours()).padStart(2, '0');
     const minute = String(d.getMinutes()).padStart(2, '0');
     const second = String(d.getSeconds()).padStart(2, '0');
 
-    return `${day}/${month}/${year} ${hour}:${minute}:${second}`;
+    return `${day} ${month} ${year} ${hour}:${minute}:${second}`;
 };
 
 const getEventClass = (event: string | null) => {
@@ -157,12 +158,6 @@ const dtOptions = computed(() => ({
         </div>
 
         <Card class="gap-0 py-0 shadow-none">
-            <CardHeader class="flex flex-col gap-4 border-b px-5 py-5 md:flex-row md:items-start md:justify-between">
-                <div class="space-y-1">
-                    <CardTitle class="text-base">Recent Activity</CardTitle>
-                    <CardDescription>All recorded system activities</CardDescription>
-                </div>
-            </CardHeader>
             <CardContent class="px-0">
                 <div class="px-5 pb-4">
                     <DataTable

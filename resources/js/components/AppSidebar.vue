@@ -2,12 +2,9 @@
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import {
-    Activity,
     BookOpen,
     FolderGit2,
     LayoutGrid,
-    ShieldCheck,
-    Users as TeamsIcon,
 } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -22,14 +19,8 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { usePermissions } from '@/composables/usePermissions';
 import { dashboard } from '@/routes';
-import { index as activityLogsIndex } from '@/routes/activity-logs';
-import { index as rolesIndex } from '@/routes/roles';
-import { index as usersIndex } from '@/routes/users';
 import type { NavItem } from '@/types';
-
-const { can } = usePermissions();
 
 const mainNavItems = computed<NavItem[]>(() => {
     const items: NavItem[] = [
@@ -39,30 +30,6 @@ const mainNavItems = computed<NavItem[]>(() => {
             icon: LayoutGrid,
         },
     ];
-
-    if (can('users.view')) {
-        items.push({
-            title: 'Teams',
-            href: usersIndex(),
-            icon: TeamsIcon,
-        });
-    }
-
-    if (can('roles.view')) {
-        items.push({
-            title: 'Roles & permissions',
-            href: rolesIndex(),
-            icon: ShieldCheck,
-        });
-    }
-
-    if (can('activity-logs.view')) {
-        items.push({
-            title: 'Activity Logs',
-            href: activityLogsIndex(),
-            icon: Activity,
-        });
-    }
 
     return items;
 });

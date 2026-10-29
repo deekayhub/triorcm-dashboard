@@ -233,12 +233,10 @@ class UserController extends Controller
             ->performedOn($user)
             ->event('updated')
             ->withProperties([
-                'name' => $user->name,
-                'email' => $user->email,
                 'role_before' => $originalRole,
                 'role_after' => $attributes['role'] ?? $originalRole,
             ])
-            ->log('User updated');
+            ->log('User role updated');
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('User updated.')]);
 

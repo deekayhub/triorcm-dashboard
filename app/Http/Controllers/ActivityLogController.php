@@ -18,7 +18,7 @@ class ActivityLogController extends Controller
 
             return DataTables::of($query)
                 ->addColumn('created_at', function (Activity $activity) {
-                    return $activity->created_at?->toIso8601String();
+                    return $activity->created_at?->format('d M Y H:i:s');
                 })
                 ->addColumn('causer', function (Activity $activity) {
                     if (! $activity->causer) {
@@ -47,14 +47,24 @@ class ActivityLogController extends Controller
                     ];
                 })
                 ->addColumn('ip_address', function (Activity $activity) {
-                    $properties = $activity->properties?->toArray() ?? [];
+                    $event = strtolower((string) $activity->event);
+                    if ($event === 'login' || $event === 'logout') {
+                        $properties = $activity->properties?->toArray() ?? [];
 
-                    return $properties['ip'] ?? $properties['ip_address'] ?? $properties['ipAddress'] ?? null;
+                        return $properties['ip'] ?? $properties['ip_address'] ?? $properties['ipAddress'] ?? null;
+                    }
+
+                    return null;
                 })
                 ->addColumn('browser', function (Activity $activity) {
-                    $properties = $activity->properties?->toArray() ?? [];
+                    $event = strtolower((string) $activity->event);
+                    if ($event === 'login' || $event === 'logout') {
+                        $properties = $activity->properties?->toArray() ?? [];
 
-                    return $properties['user_agent'] ?? $properties['userAgent'] ?? $properties['browser'] ?? null;
+                        return $properties['user_agent'] ?? $properties['userAgent'] ?? $properties['browser'] ?? null;
+                    }
+
+                    return null;
                 })
                 ->filterColumn('causer', function ($query, $keyword) {
                     $query->whereHas('causer', function ($q) use ($keyword) {
@@ -93,7 +103,7 @@ class ActivityLogController extends Controller
                         'email' => $activity->causer->email,
                     ] : null,
                     'properties' => $activity->properties?->toArray(),
-                    'created_at' => $activity->created_at?->toIso8601String(),
+                    'created_at' => $activity->created_at?->format('d M Y H:i:s'),
                 ];
             });
 

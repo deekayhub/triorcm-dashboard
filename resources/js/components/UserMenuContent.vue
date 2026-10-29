@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { LogOut, Settings } from '@lucide/vue';
+import { Activity, LogOut, Settings, ShieldCheck, Users as TeamsIcon } from '@lucide/vue';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -8,13 +8,19 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/UserInfo.vue';
+import { usePermissions } from '@/composables/usePermissions';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
+import { index as activityLogsIndex } from '@/routes/activity-logs';
+import { index as rolesIndex } from '@/routes/roles';
+import { index as usersIndex } from '@/routes/users';
 import type { User } from '@/types';
 
 type Props = {
     user: User;
 };
+
+const { can } = usePermissions();
 
 const handleLogout = () => {
     router.flushAll();
@@ -35,6 +41,24 @@ defineProps<Props>();
             <Link class="block w-full cursor-pointer" :href="edit()" prefetch>
                 <Settings class="mr-2 h-4 w-4" />
                 Settings
+            </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem v-if="can('users.view')" :as-child="true">
+            <Link class="block w-full cursor-pointer" :href="usersIndex()" prefetch>
+                <TeamsIcon class="mr-2 h-4 w-4" />
+                Teams
+            </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem v-if="can('roles.view')" :as-child="true">
+            <Link class="block w-full cursor-pointer" :href="rolesIndex()" prefetch>
+                <ShieldCheck class="mr-2 h-4 w-4" />
+                Roles & permissions
+            </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem v-if="can('activity-logs.view')" :as-child="true">
+            <Link class="block w-full cursor-pointer" :href="activityLogsIndex()" prefetch>
+                <Activity class="mr-2 h-4 w-4" />
+                Activity Logs
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>

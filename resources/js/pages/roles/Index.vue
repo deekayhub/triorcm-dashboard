@@ -20,6 +20,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { useConfirm } from '@/composables/useConfirm';
 import { index as rolesIndex, create as rolesCreate } from '@/routes/roles';
 import RoleController from '@/actions/App/Http/Controllers/RoleController';
 
@@ -94,7 +95,9 @@ const groups = computed(() => {
     }));
 });
 
-const deleteRole = (role: RoleRow) => {
+const { confirm } = useConfirm();
+
+const deleteRole = async (role: RoleRow) => {
     if (role.name === 'super-admin') {
         return;
     }
@@ -103,7 +106,14 @@ const deleteRole = (role: RoleRow) => {
         return;
     }
 
-    if (confirm(`Delete role "${role.name}"? This action cannot be undone.`)) {
+    const ok = await confirm({
+        title: 'Delete role',
+        description: `Are you sure you want to delete "${role.name}"? This action cannot be undone.`,
+        confirmText: 'Delete',
+        variant: 'destructive',
+    });
+
+    if (ok) {
         router.delete(RoleController.destroy(role.id).url);
     }
 };

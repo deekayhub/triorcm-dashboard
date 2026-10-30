@@ -43,6 +43,15 @@ Route::middleware(['auth', 'verified', 'permission:dashboard.view'])->group(func
         ->middleware('role:super-admin')
         ->name('users.destroy');
 
+    Route::get('notifications', [\App\Http\Controllers\NotificationController::class, 'index'])
+        ->name('notifications.index');
+    Route::get('notifications/unread', [\App\Http\Controllers\NotificationController::class, 'unread'])
+        ->name('notifications.unread');
+    Route::post('notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])
+        ->name('notifications.read');
+    Route::post('notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])
+        ->name('notifications.read-all');
+
     Route::get('roles', [RoleController::class, 'index'])
         ->middleware('permission:roles.view')
         ->name('roles.index');

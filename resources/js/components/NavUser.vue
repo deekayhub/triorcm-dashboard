@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { usePage } from '@inertiajs/vue3';
-import { ChevronsUpDown } from '@lucide/vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { Bell, ChevronsUpDown } from '@lucide/vue';
 import { computed } from 'vue';
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -15,14 +16,30 @@ import {
 } from '@/components/ui/sidebar';
 import UserInfo from '@/components/UserInfo.vue';
 import UserMenuContent from '@/components/UserMenuContent.vue';
+import { index as notificationsIndex } from '@/routes/notifications';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+const unreadCount = computed(() => (page.props.notifications as any)?.unread_count ?? 0);
 const { isMobile, state } = useSidebar();
 </script>
 
 <template>
-    <SidebarMenu>
+    <SidebarMenu class="gap-1">
+        <SidebarMenuItem>
+            <SidebarMenuButton as-child size="default">
+                <Link :href="notificationsIndex()" class="flex items-center gap-2">
+                    <Bell class="size-4" />
+                    <span>Notifications</span>
+                    <span
+                        v-if="unreadCount > 0"
+                        class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium text-primary-foreground"
+                    >
+                        {{ unreadCount > 99 ? '99+' : unreadCount }}
+                    </span>
+                </Link>
+            </SidebarMenuButton>
+        </SidebarMenuItem>
         <SidebarMenuItem>
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>

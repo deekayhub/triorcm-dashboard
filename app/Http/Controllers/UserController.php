@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
+use App\Notifications\TeamMemberCreated;
+use App\Notifications\TeamMemberDeleted;
+use App\Notifications\TeamMemberUpdated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -178,6 +181,14 @@ class UserController extends Controller
             ])
             ->log('User created');
 
+        $actor = $request->user();
+        User::query()
+            ->whereHas('roles', function ($q) {
+                $q->whereIn('name', ['super-admin', 'admin']);
+            })
+            ->get()
+            ->each(fn (User $recipient) => $recipient->notify(new TeamMemberCreated($user, $actor)));
+
         Inertia::flash('toast', ['type' => 'success', 'message' => __('User created.')]);
 
         return to_route('users.index');
@@ -238,6 +249,14 @@ class UserController extends Controller
             ])
             ->log('User role updated');
 
+        $actor = $request->user();
+        User::query()
+            ->whereHas('roles', function ($q) {
+                $q->whereIn('name', ['super-admin', 'admin']);
+            })
+            ->get()
+            ->each(fn (User $recipient) => $recipient->notify(new TeamMemberUpdated($user, $actor)));
+
         Inertia::flash('toast', ['type' => 'success', 'message' => __('User updated.')]);
 
         return to_route('users.index');
@@ -256,15 +275,25 @@ class UserController extends Controller
             return to_route('users.index');
         }
 
+        $deletedName = $user->name;
+        $deletedEmail = $user->email;
+
         activity()
             ->causedBy($actor)
             ->performedOn($user)
             ->event('deleted')
             ->withProperties([
-                'name' => $user->name,
-                'email' => $user->email,
+                'name' => $deletedName,
+                'email' => $deletedEmail,
             ])
             ->log('User deleted');
+
+        User::query()
+            ->whereHas('roles', function ($q) {
+                $q->whereIn('name', ['super-admin', 'admin']);
+            })
+            ->get()
+            ->each(fn (User $recipient) => $recipient->notify(new TeamMemberDeleted($deletedName, $deletedEmail, $actor)));
 
         $user->delete();
 

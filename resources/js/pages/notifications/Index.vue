@@ -42,6 +42,20 @@ defineOptions({
     },
 });
 
+const getNotificationStyle = (notification: NotificationItem) => {
+    const title = (notification.data?.title || '').toLowerCase();
+    if (title.includes('add') || title.includes('creat')) {
+        return 'bg-emerald-500/10 text-emerald-600';
+    }
+    if (title.includes('updat')) {
+        return 'bg-amber-500/10 text-amber-600';
+    }
+    if (title.includes('remov') || title.includes('delet')) {
+        return 'bg-red-500/10 text-red-600';
+    }
+    return 'bg-muted text-muted-foreground';
+};
+
 const formatDate = (date: string | null) => {
     if (!date) {
         return '-';
@@ -116,7 +130,10 @@ const goTo = (notification: NotificationItem) => {
                         :class="{ 'bg-muted/20': !notification.read_at }"
                         @click="goTo(notification)"
                     >
-                        <div class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                        <div
+                            class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg"
+                            :class="getNotificationStyle(notification)"
+                        >
                             <Bell class="size-4" />
                         </div>
                         <div class="min-w-0 flex-1 space-y-1">

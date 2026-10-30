@@ -52,6 +52,13 @@ Route::middleware(['auth', 'verified', 'permission:dashboard.view'])->group(func
     Route::post('notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])
         ->name('notifications.read-all');
 
+    Route::resource('providers', \App\Http\Controllers\ProviderController::class);
+    Route::resource('provider-applications', \App\Http\Controllers\ProviderApplicationController::class);
+    Route::resource('provider-licenses', \App\Http\Controllers\ProviderLicenseController::class);
+    Route::resource('provider-documents', \App\Http\Controllers\ProviderDocumentController::class);
+    Route::resource('provider-verifications', \App\Http\Controllers\ProviderVerificationController::class);
+    Route::resource('credentialing-steps', \App\Http\Controllers\CredentialingStepController::class);
+
     Route::get('roles', [RoleController::class, 'index'])
         ->middleware('permission:roles.view')
         ->name('roles.index');

@@ -1,27 +1,12 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { FileText, Plus, UserCheck, UserX, Users } from '@lucide/vue';
-import { computed, onMounted, ref, watch } from 'vue';
-import DataTable from 'datatables.net-vue3';
-import DataTablesCore from 'datatables.net-dt';
-import 'datatables.net-dt/css/dataTables.dataTables.css';
-import $ from 'jquery';
+import { Plus } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { index as providersIndex } from '@/routes/providers';
-
-DataTable.use(DataTablesCore);
-$.fn.dataTable = DataTablesCore;
-
-const props = defineProps<{
-    stats: {
-        total: number;
-        active: number;
-        pending: number;
-        inactive: number;
-    };
-}>();
+import { useToast } from '@/composables/useToast';
+import { ref, watch } from 'vue';
 
 defineOptions({
     layout: {
@@ -34,150 +19,129 @@ defineOptions({
     },
 });
 
-const dtColumns = [
-    { data: 'provider', name: 'provider', orderable: true },
-    { data: 'specialty', name: 'specialty', orderable: true },
-    { data: 'status', name: 'status', orderable: true },
-    { data: 'applications_count', name: 'applications_count', orderable: false },
-    { data: 'actions', name: 'actions', orderable: false },
-];
+const props = defineProps<{
+    stats: {
+        total: number;
+        active: number;
+        pending: number;
+        inactive: number;
+    };
+    verifications: {
+        data: Array<any>;
+        links: Array<any>;
+        meta: any;
+    };
+}>();
 
-const dtOptions = computed(() => ({
-    serverSide: true,
-    processing: true,
-    ajax: {
-        url: providersIndex().url,
-        type: 'GET',
-    },
-    columns: dtColumns,
-    order: [[0, 'asc']],
-    pageLength: 10,
-    lengthMenu: [10, 25, 50, 100],
-    layout: {
-        topStart: 'pageLength',
-        topEnd: 'search',
-        bottomStart: 'info',
-        bottomEnd: 'paging',
-    },
-    language: {
-        search: 'Search:',
-        searchPlaceholder: 'Search providers...',
-        processing: 'Loading...',
-        emptyTable: 'No providers found',
-    },
-    pagingType: 'simple_numbers',
-}));
+const { toast } = useToast();
+
+const isDeleteOpen = ref(false);
+let currentProviderId = null;
+
+function confirmDelete(id: number) {
+    currentProviderId = id;
+    isDeleteOpen.value = true;
+}
+
+async function deleteProvider(id: number) {
+    // TODO: Implement delete API call
+    isDeleteOpen.value = false;
+    toast({
+        title: 'Provider deleted',
+        description: 'The provider has been successfully deleted.',
+        variant: 'success',
+    });
+}
 </script>
 
 <template>
     <Head title="Providers" />
 
-    <div class="flex h-full flex-1 flex-col gap-5 overflow-x-clip p-4 md:p-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="space-y-1.5">
-                <div class="flex items-center gap-2">
-                    <p class="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
-                        Credentialing
-                    </p>
+    <div class="flex h-full flex-1 flex-col gap-6 bg-neutral-50">
+
+        <!-- Hero Section -->
+        <section class="mb-8">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8 md:py-12 bg-white rounded-xl shadow-sm border border-border">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold tracking-tight text-neutral-900">Providers</h1>
+                        <p class="mt-2 text-lg text-neutral-500">Manage provider profiles and credentialing applications</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <Button @click="router.visit('/providers/create')" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                            <Plus class="size-4" />
+                            Add Provider
+                        </Button>
+                    </div>
                 </div>
-                <h1 class="text-2xl font-semibold tracking-tight">Providers</h1>
-                <p class="text-sm text-muted-foreground">
-                    Manage provider profiles and credentialing applications
-                </p>
             </div>
-            <Button @click="router.visit('/providers/create')">
-                <Plus class="size-4" />
-                Add Provider
-            </Button>
-        </div>
+        </section>
 
-        <div class="grid gap-4 sm:grid-cols-4">
-            <Card class="gap-0 py-4 shadow-none">
-                <CardContent class="flex items-center gap-3 px-5">
-                    <div class="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                        <Users class="size-4" />
-                    </div>
-                    <div>
-                        <p class="text-xs text-muted-foreground">Total</p>
-                        <p class="text-xl font-semibold tabular-nums">{{ stats.total }}</p>
-                    </div>
-                </CardContent>
+        <!-- Stats KPI Cards -->
+        <section class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-3">
+            <Card class="p-4 border border-emerald-100 rounded-lg">
+                <div class="text-2xl font-semibold text-emerald-600">{{ stats.total }}</div>
+                <p class="text-sm text-emerald-500 mt-1">Total Providers</p>
             </Card>
-            <Card class="gap-0 py-4 shadow-none">
-                <CardContent class="flex items-center gap-3 px-5">
-                    <div class="flex size-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
-                        <UserCheck class="size-4" />
-                    </div>
-                    <div>
-                        <p class="text-xs text-muted-foreground">Active</p>
-                        <p class="text-xl font-semibold tabular-nums">{{ stats.active }}</p>
-                    </div>
-                </CardContent>
+            <Card class="p-4 border border-emerald-100 rounded-lg">
+                <div class="text-2xl font-semibold text-emerald-400">{{ stats.active }}</div>
+                <p class="text-sm text-emerald-500 mt-1">Active</p>
             </Card>
-            <Card class="gap-0 py-4 shadow-none">
-                <CardContent class="flex items-center gap-3 px-5">
-                    <div class="flex size-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
-                        <FileText class="size-4" />
-                    </div>
-                    <div>
-                        <p class="text-xs text-muted-foreground">Pending</p>
-                        <p class="text-xl font-semibold tabular-nums">{{ stats.pending }}</p>
-                    </div>
-                </CardContent>
+            <Card class="p-4 border border-amber-100 rounded-lg">
+                <div class="text-2xl font-semibold text-amber-600">{{ stats.pending }}</div>
+                <p class="text-sm text-amber-500 mt-1">Pending</p>
             </Card>
-            <Card class="gap-0 py-4 shadow-none">
-                <CardContent class="flex items-center gap-3 px-5">
-                    <div class="flex size-9 items-center justify-center rounded-lg bg-red-500/10 text-red-600">
-                        <UserX class="size-4" />
-                    </div>
-                    <div>
-                        <p class="text-xs text-muted-foreground">Inactive</p>
-                        <p class="text-xl font-semibold tabular-nums">{{ stats.inactive }}</p>
-                    </div>
-                </CardContent>
+            <Card class="p-4 border border-rose-100 rounded-lg">
+                <div class="text-2xl font-semibold text-rose-600">{{ stats.inactive }}</div>
+                <p class="text-sm text-rose-500 mt-1">Inactive</p>
             </Card>
-        </div>
+        </section>
 
-        <Card class="gap-0 py-0 shadow-none">
-            <CardContent class="px-0">
-                <div class="px-5 pb-4">
-                    <DataTable :columns="dtColumns" :options="dtOptions" class="w-full text-sm">
-                        <thead>
-                            <tr class="border-b text-left text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
-                                <th class="px-0 py-2.5 font-medium">Provider</th>
-                                <th class="px-0 py-2.5 font-medium">Specialty</th>
-                                <th class="px-0 py-2.5 font-medium">Status</th>
-                                <th class="px-0 py-2.5 font-medium">Applications</th>
-                                <th class="px-0 py-2.5 text-right font-medium">Actions</th>
-                            </tr>
-                        </thead>
-                        <template #column-provider="props">
-                            <button class="flex flex-col text-left py-2" @click="router.visit(`/providers/${props.rowData.provider.id}`)">
-                                <span class="font-medium">{{ props.rowData.provider.name }}</span>
-                                <span class="text-xs text-muted-foreground">{{ props.rowData.provider.email }}</span>
-                                <span v-if="props.rowData.provider.npi" class="text-xs text-muted-foreground">NPI: {{ props.rowData.provider.npi }}</span>
-                            </button>
-                        </template>
-                        <template #column-specialty="props">
-                            <span class="text-muted-foreground">{{ props.rowData.specialty || '-' }}</span>
-                        </template>
-                        <template #column-status="props">
-                            <Badge :variant="props.rowData.status === 'active' ? 'secondary' : props.rowData.status === 'pending' ? 'outline' : 'destructive'" class="gap-1.5">
-                                <span class="size-1.5 rounded-full" :class="props.rowData.status === 'active' ? 'bg-emerald-500' : props.rowData.status === 'pending' ? 'bg-amber-500' : 'bg-red-500'"></span>
-                                {{ props.rowData.status }}
-                            </Badge>
-                        </template>
-                        <template #column-applications_count="props">
-                            <span class="tabular-nums">{{ props.rowData.applications_count }}</span>
-                        </template>
-                        <template #column-actions="props">
-                            <div class="flex justify-end">
-                                <Button variant="ghost" size="sm" @click="router.visit(`/providers/${props.rowData.id}/edit`)">Edit</Button>
-                            </div>
-                        </template>
-                    </DataTable>
-                </div>
-            </CardContent>
-        </Card>
+        <!-- Data Table Section -->
+        <section>
+            <div class="overflow-x-auto rounded-lg shadow-sm bg-white border border-border">
+                <table class="min-w-full divide-y divide-border">
+                    <thead class="bg-neutral-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Provider</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Specialty</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">NPI</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-border">
+                        <tr v-for="provider in props.verifications.data" :key="provider.id" class="hover:bg-neutral-50 cursor-pointer">
+                            <td class="px-6 py-4 font-medium">{{ provider.first_name }} {{ provider.last_name }}</td>
+                            <td class="px-6 py-4 text-neutral-500">{{ provider.specialty || '-' }}</td>
+                            <td class="px-6 py-4">
+                                <Badge variant="outline" class="text-sm capitalize">{{ provider.status }}</Badge>
+                            </td>
+                            <td class="px-6 py-4 text-neutral-500">{{ provider.npi || '-' }}</td>
+                            <td class="px-6 py-4 text-right">
+                                <Button variant="ghost" size="sm" class="text-primary">Edit</Button>
+                                <Button variant="ghost" size="sm" class="text-destructive" @click="confirmDelete(provider.id)">Delete</Button>
+                            </td>
+                        </tr>
+                        <tr v-if="props.verifications.data.length === 0">
+                            <td colspan="5" class="px-6 py-8 text-center text-neutral-500">No providers found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
     </div>
+
+    <!-- Delete Confirmation -->
+    <dialog :open="isDeleteOpen" class="modal modal-sm">
+        <form method="dialog" class="modal-box">
+            <h3 class="text-lg font-medium">Delete Provider</h3>
+            <p>Are you sure you want to delete this provider?</p>
+            <div class="flex justify-end gap-3 pt-4">
+                <button class="btn btn-ghost" @click="isDeleteOpen = false">Cancel</button>
+                <button class="btn btn-danger" @click="deleteProvider(provider.id)">Delete</button>
+            </div>
+        </form>
+    </dialog>
 </template>

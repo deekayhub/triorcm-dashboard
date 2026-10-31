@@ -5,6 +5,8 @@ import {
     BookOpen,
     FolderGit2,
     LayoutGrid,
+    FileText,
+    ClipboardList,
 } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -29,23 +31,20 @@ const mainNavItems = computed<NavItem[]>(() => {
             href: dashboard(),
             icon: LayoutGrid,
         },
+        {
+            title: 'Providers',
+            href: '/providers',
+            icon: FileText,
+        },
+        {
+            title: 'Applications',
+            href: '/provider-applications',
+            icon: ClipboardList,
+        },
     ];
 
     return items;
 });
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
-];
 </script>
 
 <template>

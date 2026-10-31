@@ -12,7 +12,6 @@ import { usePermissions } from '@/composables/usePermissions';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
 import { index as activityLogsIndex } from '@/routes/activity-logs';
-import { index as providersIndex } from '@/routes/providers';
 import { index as rolesIndex } from '@/routes/roles';
 import { index as usersIndex } from '@/routes/users';
 import type { User } from '@/types';
@@ -42,12 +41,6 @@ defineProps<Props>();
             <Link class="block w-full cursor-pointer" :href="edit()" prefetch>
                 <Settings class="mr-2 h-4 w-4" />
                 Settings
-            </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem :as-child="true">
-            <Link class="block w-full cursor-pointer" :href="providersIndex()" prefetch>
-                <FileText class="mr-2 h-4 w-4" />
-                Providers
             </Link>
         </DropdownMenuItem>
         <DropdownMenuItem v-if="can('users.view')" :as-child="true">

@@ -16,6 +16,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -58,5 +59,20 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => "User has been {$eventName}");
+    }
+
+    public function providersCreated(): HasMany
+    {
+        return $this->hasMany(Provider::class, 'created_by');
+    }
+
+    public function providersUpdated(): HasMany
+    {
+        return $this->hasMany(Provider::class, 'updated_by');
+    }
+
+    public function assignedProviders(): HasMany
+    {
+        return $this->hasMany(Provider::class, 'user_id');
     }
 }

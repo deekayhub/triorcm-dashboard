@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Form, Head, router } from '@inertiajs/vue3';
 import { ArrowLeft } from '@lucide/vue';
+import ProviderController from '@/actions/App/Http/Controllers/ProviderController';
+import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

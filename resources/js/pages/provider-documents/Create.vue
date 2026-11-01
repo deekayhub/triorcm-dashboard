@@ -1,17 +1,29 @@
 <script setup lang="ts">
-import { Form, Head, router } from '@inertiajs/vue3';
-import { ArrowLeft } from '@lucide/vue';
-import ProviderDocumentController from '@/actions/App/Http/Controllers/ProviderDocumentController';
-import InputError from '@/components/InputError.vue';
+import { computed, ref } from 'vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, Upload } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
-import { Textarea } from '@/components/ui/textarea';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import InputError from '@/components/InputError.vue';
 import { index as providerDocumentsIndex } from '@/routes/provider-documents';
+import { useToast } from '@/composables/useToast';
 
-defineProps<{
+const props = defineProps<{
     provider: any;
     application: any;
     providers: Array<any>;
@@ -26,6 +38,81 @@ defineOptions({
         ],
     },
 });
+
+const { toast } = useToast();
+const fileInput = ref<HTMLInputElement | null>(null);
+
+const documentTypes = [
+    { value: 'cv', label: 'CV' },
+    { value: 'license', label: 'License' },
+    { value: 'dea', label: 'DEA' },
+    { value: 'malpractice', label: 'Malpractice' },
+    { value: 'education', label: 'Education' },
+    { value: 'certification', label: 'Certification' },
+    { value: 'other', label: 'Other' },
+];
+
+const form = useForm({
+    provider_id: props.provider ? String(props.provider.id) : '',
+    provider_application_id: props.application
+        ? String(props.application.id)
+        : 'none',
+    type: 'cv',
+    name: '',
+    issue_date: '',
+    expiration_date: '',
+    file: null as File | null,
+});
+
+const selectedProvider = computed(() =>
+    props.providers.find(
+        (provider) => String(provider.id) === form.provider_id,
+    ),
+);
+
+const providerApplications = computed(() =>
+    props.applications.filter(
+        (application) =>
+            !form.provider_id ||
+            String(application.provider_id) === form.provider_id,
+    ),
+);
+
+function onFileChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    form.file = input.files?.[0] ?? null;
+}
+
+function submit() {
+    form.transform((data) => ({
+        ...data,
+        provider_application_id:
+            data.provider_application_id === 'none'
+                ? null
+                : data.provider_application_id,
+    }));
+
+    form.post('/provider-documents', {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            toast({
+                title: 'Uploaded',
+                description:
+                    'Document uploaded successfully and is pending review.',
+                variant: 'success',
+            });
+        },
+        onError: () => {
+            toast({
+                title: 'Upload failed',
+                description:
+                    'Please review the highlighted fields and try again.',
+                variant: 'error',
+            });
+        },
+    });
+}
 </script>
 
 <template>
@@ -34,131 +121,203 @@ defineOptions({
     <div class="flex h-full flex-1 flex-col gap-5 overflow-x-clip p-4 md:p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="space-y-1.5">
-                <h1 class="text-2xl font-semibold tracking-tight">New Document</h1>
-                <p class="text-sm text-muted-foreground">Upload a credentialing document</p>
+                <h1 class="text-2xl font-semibold tracking-tight">
+                    New Document
+                </h1>
+                <p class="text-sm text-muted-foreground">
+                    Upload a credentialing document for a provider
+                </p>
             </div>
-            <Button variant="outline" @click="router.visit(providerDocumentsIndex())">
+            <Button
+                variant="outline"
+                @click="router.visit(providerDocumentsIndex())"
+            >
                 <ArrowLeft class="size-4" />
                 Back to Documents
             </Button>
         </div>
 
-        <Card class="max-w-4xl shadow-none">
+        <Card class="max-w-3xl shadow-none">
             <CardHeader>
                 <CardTitle>Document Information</CardTitle>
-                <CardDescription>Upload and manage provider documents</CardDescription>
+                <CardDescription>
+                    PDF, JPG, PNG, TIFF or Word · maximum 10 MB. Uploads are
+                    pending review by default.
+                </CardDescription>
             </CardHeader>
             <CardContent>
-                <Form v-bind="ProviderDocumentController.store.form()" class="space-y-6" v-slot="{ errors, processing }">
-                    <div class="grid gap-2">
-                        <Label for="provider_id">Provider *</Label>
-                        <select id="provider_id" name="provider_id" required class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-                            <option value="">Select provider</option>
-                            <option v-for="p in providers" :key="p.id" :value="p.id" :selected="provider && provider.id === p.id">
-                                {{ p.first_name }} {{ p.last_name }} ({{ p.email }})
-                            </option>
-                        </select>
-                        <InputError :message="errors.provider_id" />
+                <form class="space-y-6" @submit.prevent="submit">
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="grid gap-2">
+                            <Label for="provider_id">Provider *</Label>
+                            <Select
+                                id="provider_id"
+                                :model-value="form.provider_id"
+                                @update:model-value="
+                                    form.provider_id = String($event ?? '')
+                                "
+                            >
+                                <SelectTrigger class="w-full">
+                                    <SelectValue placeholder="Select provider" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="providerOption in providers"
+                                        :key="providerOption.id"
+                                        :value="String(providerOption.id)"
+                                    >
+                                        {{ providerOption.first_name }}
+                                        {{ providerOption.last_name }}
+                                        ({{ providerOption.email }})
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="form.errors.provider_id" />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="provider_application_id">
+                                Application
+                            </Label>
+                            <Select
+                                id="provider_application_id"
+                                :model-value="form.provider_application_id"
+                                @update:model-value="
+                                    form.provider_application_id = String(
+                                        $event ?? '',
+                                    )
+                                "
+                            >
+                                <SelectTrigger class="w-full">
+                                    <SelectValue placeholder="No application" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">
+                                        No application
+                                    </SelectItem>
+                                    <SelectItem
+                                        v-for="applicationOption in providerApplications"
+                                        :key="applicationOption.id"
+                                        :value="String(applicationOption.id)"
+                                    >
+                                        {{ applicationOption.application_number }}
+                                        ({{ applicationOption.type }})
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError
+                                :message="form.errors.provider_application_id"
+                            />
+                        </div>
                     </div>
 
                     <div class="grid gap-4 md:grid-cols-2">
-                        <div class="grid gap-2">
-                            <Label for="provider_application_id">Application</Label>
-                            <select id="provider_application_id" name="provider_application_id" class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-                                <option value="">No application</option>
-                                <option v-for="app in applications" :key="app.id" :value="app.id">
-                                    {{ app.application_number }} ({{ app.type.replace('_', ' ') }})
-                                </option>
-                            </select>
-                            <InputError :message="errors.provider_application_id" />
-                        </div>
                         <div class="grid gap-2">
                             <Label for="type">Type *</Label>
-                            <select id="type" name="type" required class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-                                <option value="cv">CV</option>
-                                <option value="license">License</option>
-                                <option value="dea">DEA</option>
-                                <option value="malpractice">Malpractice</option>
-                                <option value="education">Education</option>
-                                <option value="certification">Certification</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <InputError :message="errors.type" />
+                            <Select
+                                id="type"
+                                :model-value="form.type"
+                                @update:model-value="
+                                    form.type = String($event ?? '')
+                                "
+                            >
+                                <SelectTrigger class="w-full">
+                                    <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="type in documentTypes"
+                                        :key="type.value"
+                                        :value="type.value"
+                                    >
+                                        {{ type.label }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="form.errors.type" />
                         </div>
-                    </div>
 
-                    <div class="grid gap-4 md:grid-cols-2">
                         <div class="grid gap-2">
                             <Label for="name">Document Name *</Label>
-                            <Input id="name" name="name" required />
-                            <InputError :message="errors.name" />
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="file_path">File Path *</Label>
-                            <Input id="file_path" name="file_path" required />
-                            <InputError :message="errors.file_path" />
-                        </div>
-                    </div>
-
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div class="grid gap-2">
-                            <Label for="file_name">File Name *</Label>
-                            <Input id="file_name" name="file_name" required />
-                            <InputError :message="errors.file_name" />
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="mime_type">Mime Type</Label>
-                            <Input id="mime_type" name="mime_type" />
-                            <InputError :message="errors.mime_type" />
+                            <Input
+                                id="name"
+                                v-model="form.name"
+                                maxlength="255"
+                                placeholder="e.g. DEA registration certificate"
+                            />
+                            <InputError :message="form.errors.name" />
                         </div>
                     </div>
 
                     <div class="grid gap-4 md:grid-cols-2">
                         <div class="grid gap-2">
-                            <Label for="file_size">File Size (bytes)</Label>
-                            <Input id="file_size" name="file_size" type="number" />
-                            <InputError :message="errors.file_size" />
+                            <Label for="issue_date">Issue Date</Label>
+                            <Input
+                                id="issue_date"
+                                v-model="form.issue_date"
+                                type="date"
+                            />
+                            <InputError :message="form.errors.issue_date" />
                         </div>
+
                         <div class="grid gap-2">
-                            <Label for="status">Status *</Label>
-                            <select id="status" name="status" required class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                            <InputError :message="errors.status" />
+                            <Label for="expiration_date">Expiration Date</Label>
+                            <Input
+                                id="expiration_date"
+                                v-model="form.expiration_date"
+                                type="date"
+                            />
+                            <InputError
+                                :message="form.errors.expiration_date"
+                            />
                         </div>
                     </div>
 
                     <div class="grid gap-2">
-                        <Label for="reviewed_by">Reviewed By</Label>
-                        <select id="reviewed_by" name="reviewed_by" class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-                            <option value="">None</option>
-                        </select>
-                        <InputError :message="errors.reviewed_by" />
+                        <Label for="file">File *</Label>
+                        <Input
+                            id="file"
+                            ref="fileInput"
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff,.doc,.docx"
+                            @change="onFileChange"
+                        />
+                        <p
+                            v-if="form.file"
+                            class="text-xs text-muted-foreground"
+                        >
+                            {{ form.file.name }} ·
+                            {{ Math.max(1, Math.round(form.file.size / 1024)) }}
+                            KB
+                        </p>
+                        <InputError :message="form.errors.file" />
                     </div>
 
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div class="grid gap-2">
-                            <Label for="reviewed_at">Reviewed Date</Label>
-                            <Input id="reviewed_at" name="reviewed_at" type="date" />
-                            <InputError :message="errors.reviewed_at" />
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="review_notes">Review Notes</Label>
-                            <Textarea id="review_notes" name="review_notes" rows="3" />
-                            <InputError :message="errors.review_notes" />
-                        </div>
+                    <div
+                        v-if="selectedProvider"
+                        class="rounded-md border bg-neutral-50 px-4 py-3 text-sm text-neutral-600"
+                    >
+                        Uploading for
+                        <span class="font-medium text-neutral-900">
+                            {{ selectedProvider.first_name }}
+                            {{ selectedProvider.last_name }}
+                        </span>
                     </div>
 
-                    <div class="flex gap-2">
-                        <Button type="submit" :disabled="processing">
-                            <Spinner v-if="processing" />
-                            Create Document
+                    <div class="flex items-center justify-between border-t pt-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            @click="router.visit(providerDocumentsIndex())"
+                        >
+                            Cancel
                         </Button>
-                        <Button type="button" variant="outline" @click="router.visit(providerDocumentsIndex())">Cancel</Button>
+                        <Button type="submit" :disabled="form.processing">
+                            <Upload class="mr-2 size-4" />
+                            {{ form.processing ? 'Uploading…' : 'Upload Document' }}
+                        </Button>
                     </div>
-                </Form>
+                </form>
             </CardContent>
         </Card>
     </div>

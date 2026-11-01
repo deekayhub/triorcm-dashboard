@@ -8,6 +8,14 @@ import { index as providerApplicationsIndex } from '@/routes/provider-applicatio
 import { useToast } from '@/composables/useToast';
 import { ref } from 'vue';
 
+defineProps<{
+    applications: {
+        data: Array<any>;
+        links: Array<any>;
+        meta: any;
+    };
+}>();
+
 defineOptions({
     layout: {
         breadcrumbs: [
@@ -62,7 +70,7 @@ document.addEventListener('keydown', (e) => {
 
         <Card class="gap-0 rounded-lg shadow-sm border border-border">
             <CardContent class="px-5 pb-4">
-                <p class="text-sm text-muted-foreground">Total: {{ providerApplicationsIndex.data.length }}</p>
+                <p class="text-sm text-muted-foreground">Total: {{ applications.data.length }}</p>
                 <table class="w-full text-sm mt-3">
                     <thead>
                         <tr class="border-b text-left text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
@@ -74,7 +82,7 @@ document.addEventListener('keydown', (e) => {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="app in providerApplicationsIndex.data" :key="app.id" class="border-b last:border-0 hover:bg-neutral-50 cursor-pointer">
+                        <tr v-for="app in applications.data" :key="app.id" class="border-b last:border-0 hover:bg-neutral-50 cursor-pointer">
                             <td class="px-5 py-3">
                                 <button class="text-left" @click="router.visit(`/provider-applications/${app.id}`)">
                                     <p class="font-medium">Application #{{ app.id }}</p>
@@ -92,7 +100,7 @@ document.addEventListener('keydown', (e) => {
                                 <Button variant="ghost" size="sm" class="text-destructive" @click="confirmDelete(app.id)">Delete</Button>
                             </td>
                         </tr>
-                        <tr v-if="providerApplicationsIndex.data.length === 0">
+                        <tr v-if="applications.data.length === 0">
                             <td colspan="5" class="px-5 py-6 text-center text-muted-foreground">No applications found</td>
                         </tr>
                     </tbody>

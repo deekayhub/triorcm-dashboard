@@ -2,20 +2,31 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ProviderStoreRequest;
+use App\Http\Requests\ProviderUpdateRequest;
+use App\Http\Resources\ProviderResource;
+use App\Models\DisclosureQuestion;
 use App\Models\Provider;
+use App\Models\Specialty;
+use App\Models\Team;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Yajra\DataTables\Facades\DataTables;
 
 class ProviderController extends Controller
 {
-    public function index(Request $request): Response|\Illuminate\Http\JsonResponse
+    public function index(Request $request): Response|JsonResponse
     {
+        $this->authorize('viewAny', Provider::class);
+
         if ($request->ajax() && $request->has('draw')) {
-            $query = Provider::query()->withCount(['applications', 'licenses', 'documents']);
+            $query = Provider::query()
+                ->with(['user', 'team', 'creator', 'updater'])
+                ->withCount(['applications', 'licenses', 'documents']);
 
             return DataTables::of($query)
                 ->addColumn('provider', function (Provider $provider) {
@@ -31,6 +42,9 @@ class ProviderController extends Controller
                 })
                 ->addColumn('status', function (Provider $provider) {
                     return $provider->status;
+                })
+                ->addColumn('team', function (Provider $provider) {
+                    return $provider->team?->name ?? '-';
                 })
                 ->addColumn('applications_count', function (Provider $provider) {
                     return $provider->applications_count;
@@ -60,32 +74,29 @@ class ProviderController extends Controller
                 'pending' => Provider::where('status', 'pending')->count(),
                 'inactive' => Provider::where('status', 'inactive')->count(),
             ],
+            'providers' => Provider::query()
+                ->with(['user', 'team'])
+                ->latest()
+                ->paginate(15)
+                ->withQueryString(),
         ]);
     }
 
     public function create(): Response
     {
-        return Inertia::render('providers/Create');
+        $this->authorize('create', Provider::class);
+
+        return Inertia::render('providers/Create', [
+            'teams' => Team::query()->orderBy('name')->get(['id', 'name']),
+            'users' => User::query()->orderBy('name')->get(['id', 'name']),
+        ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(ProviderStoreRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'middle_name' => ['nullable', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:providers,email'],
-            'npi' => ['nullable', 'string', 'max:10', 'unique:providers,npi'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'fax' => ['nullable', 'string', 'max:20'],
-            'dob' => ['nullable', 'date'],
-            'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
-            'provider_type' => ['required', Rule::in(['physician', 'nurse_practitioner', 'physician_assistant', 'other'])],
-            'specialty' => ['nullable', 'string', 'max:255'],
-            'taxonomy_code' => ['nullable', 'string', 'max:10'],
-            'status' => ['required', Rule::in(['active', 'inactive', 'pending', 'suspended'])],
-            'notes' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
+        $validated['created_by'] = $request->user()?->id;
+        $validated['updated_by'] = $request->user()?->id;
 
         $provider = Provider::create($validated);
 
@@ -100,38 +111,30 @@ class ProviderController extends Controller
 
     public function show(Provider $provider): Response
     {
-        $provider->load(['applications.steps', 'applications.submittedBy', 'applications.reviewedBy', 'licenses', 'documents.uploadedBy', 'documents.reviewedBy', 'verifications.verifiedBy']);
+        $this->authorize('view', $provider);
+
+        $provider->load(['applications.steps', 'applications.submittedBy', 'applications.reviewedBy', 'licenses', 'documents.uploadedBy', 'documents.reviewedBy', 'verifications.verifiedBy', 'user', 'team', 'creator', 'updater']);
 
         return Inertia::render('providers/Show', [
-            'provider' => $provider,
+            'provider' => new ProviderResource($provider),
         ]);
     }
 
     public function edit(Provider $provider): Response
     {
+        $this->authorize('update', $provider);
+
         return Inertia::render('providers/Edit', [
-            'provider' => $provider,
+            'provider' => new ProviderResource($provider),
+            'teams' => Team::query()->orderBy('name')->get(['id', 'name']),
+            'users' => User::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
-    public function update(Request $request, Provider $provider): RedirectResponse
+    public function update(ProviderUpdateRequest $request, Provider $provider): RedirectResponse
     {
-        $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'middle_name' => ['nullable', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('providers', 'email')->ignore($provider->id)],
-            'npi' => ['nullable', 'string', 'max:10', Rule::unique('providers', 'npi')->ignore($provider->id)],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'fax' => ['nullable', 'string', 'max:20'],
-            'dob' => ['nullable', 'date'],
-            'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
-            'provider_type' => ['required', Rule::in(['physician', 'nurse_practitioner', 'physician_assistant', 'other'])],
-            'specialty' => ['nullable', 'string', 'max:255'],
-            'taxonomy_code' => ['nullable', 'string', 'max:10'],
-            'status' => ['required', Rule::in(['active', 'inactive', 'pending', 'suspended'])],
-            'notes' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
+        $validated['updated_by'] = $request->user()?->id;
 
         $provider->update($validated);
 
@@ -146,6 +149,8 @@ class ProviderController extends Controller
 
     public function destroy(Provider $provider): RedirectResponse
     {
+        $this->authorize('archive', $provider);
+
         activity()
             ->causedBy(request()->user())
             ->performedOn($provider)
@@ -156,5 +161,17 @@ class ProviderController extends Controller
 
         return redirect()->route('providers.index')->with('success', 'Provider deleted successfully.');
     }
-}
 
+    public function profile(Provider $provider): Response
+    {
+        $this->authorize('view', $provider);
+
+        $provider->load(['user', 'team', 'creator', 'updater', 'personalDetail', 'identifiers', 'educations', 'providerSpecialties.specialty', 'locations', 'hospitalAffiliations', 'contacts', 'insurances', 'employments', 'references', 'disclosures.reviewer', 'applications', 'licenses', 'documents' => fn ($query) => $query->current()->with(['reviewedBy', 'uploadedBy', 'versions'])]);
+
+        return Inertia::render('providers/Profile', [
+            'provider' => new ProviderResource($provider),
+            'availableSpecialties' => Specialty::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code']),
+            'disclosureQuestions' => DisclosureQuestion::query()->active()->ordered()->get(['id', 'category', 'question', 'response_type', 'is_required', 'is_active', 'order']),
+        ]);
+    }
+}

@@ -1,18 +1,31 @@
 <script setup lang="ts">
-import { Form, Head, router } from '@inertiajs/vue3';
-import { ArrowLeft } from '@lucide/vue';
+import { computed, ref } from 'vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, RefreshCw, Save } from '@lucide/vue';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
-import { Textarea } from '@/components/ui/textarea';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import InputError from '@/components/InputError.vue';
 import { index as providerDocumentsIndex } from '@/routes/provider-documents';
 import { useToast } from '@/composables/useToast';
 
 const props = defineProps<{
     document: any;
-    providers: Array<any>;
     applications: Array<any>;
 }>();
 
@@ -20,148 +33,396 @@ defineOptions({
     layout: {
         breadcrumbs: [
             { title: 'Documents', href: providerDocumentsIndex() },
-            { title: document.name, href: '#' },
+            { title: 'Document', href: '#' },
             { title: 'Edit', href: '#' },
         ],
     },
 });
 
 const { toast } = useToast();
+const replacementFileInput = ref<HTMLInputElement | null>(null);
+
+const documentTypes = [
+    { value: 'cv', label: 'CV' },
+    { value: 'license', label: 'License' },
+    { value: 'dea', label: 'DEA' },
+    { value: 'malpractice', label: 'Malpractice' },
+    { value: 'education', label: 'Education' },
+    { value: 'certification', label: 'Certification' },
+    { value: 'other', label: 'Other' },
+];
+
+const form = useForm({
+    provider_id: props.document.provider_id,
+    provider_application_id: props.document.provider_application_id
+        ? String(props.document.provider_application_id)
+        : 'none',
+    type: props.document.type,
+    name: props.document.name,
+    issue_date: props.document.issue_date ?? '',
+    expiration_date: props.document.expiration_date ?? '',
+});
+
+const replacementForm = useForm({
+    file: null as File | null,
+    name: props.document.name,
+    issue_date: props.document.issue_date ?? '',
+    expiration_date: props.document.expiration_date ?? '',
+});
+
+const providerApplications = computed(() =>
+    props.applications.filter(
+        (application) =>
+            String(application.provider_id) === String(form.provider_id),
+    ),
+);
+
+type BadgeVariant = 'default' | 'outline' | 'destructive' | 'secondary';
+
+function statusBadge(status: string): {
+    label: string;
+    variant: BadgeVariant;
+    class: string;
+} {
+    switch (status) {
+        case 'approved':
+            return {
+                label: 'Approved',
+                variant: 'default',
+                class: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+            };
+        case 'rejected':
+            return {
+                label: 'Rejected',
+                variant: 'destructive',
+                class: '',
+            };
+        default:
+            return {
+                label: 'Pending review',
+                variant: 'outline',
+                class: 'bg-amber-100 text-amber-700 border-amber-200',
+            };
+    }
+}
+
+function submit() {
+    form.transform((data) => ({
+        ...data,
+        provider_application_id:
+            data.provider_application_id === 'none'
+                ? null
+                : data.provider_application_id,
+    }));
+
+    form.patch(`/provider-documents/${props.document.id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast({
+                title: 'Saved',
+                description: 'Document updated successfully.',
+                variant: 'success',
+            });
+        },
+        onError: () => {
+            toast({
+                title: 'Update failed',
+                description:
+                    'Please review the highlighted fields and try again.',
+                variant: 'error',
+            });
+        },
+    });
+}
+
+function onReplacementFile(event: Event) {
+    const input = event.target as HTMLInputElement;
+    replacementForm.file = input.files?.[0] ?? null;
+}
+
+function submitReplacement() {
+    replacementForm.post(
+        `/provider-documents/${props.document.id}/replace`,
+        {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                toast({
+                    title: 'New version uploaded',
+                    description:
+                        'The replacement version is pending review.',
+                    variant: 'success',
+                });
+                replacementForm.reset();
+
+                if (replacementFileInput.value) {
+                    replacementFileInput.value.value = '';
+                }
+            },
+            onError: () => {
+                toast({
+                    title: 'Upload failed',
+                    description:
+                        'Please review the highlighted fields and try again.',
+                    variant: 'error',
+                });
+            },
+        },
+    );
+}
 </script>
 
 <template>
     <Head title="Edit Document" />
 
-    <div class="flex h-full flex-1 flex-col gap-5 overflow-x-clip p-4 md:p-6 bg-white rounded-lg shadow-sm border border-border">
-
+    <div class="flex h-full flex-1 flex-col gap-5 overflow-x-clip p-4 md:p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="space-y-1.5">
-                <h1 class="text-2xl font-semibold tracking-tight">Edit Document</h1>
-                <p class="text-sm text-muted-foreground">{{ document.name }}</p>
+                <h1 class="text-2xl font-semibold tracking-tight">
+                    Edit Document
+                </h1>
+                <p class="text-sm text-muted-foreground">
+                    {{ document.name }}
+                </p>
             </div>
-            <Button variant="outline" @click="router.visit(providerDocumentsIndex())">
+            <Button
+                variant="outline"
+                @click="router.visit(providerDocumentsIndex())"
+            >
                 <ArrowLeft class="size-4" />
                 Back to Documents
             </Button>
         </div>
 
-        <Card class="max-w-4xl shadow-none">
-            <CardHeader>
-                <CardTitle>Document Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <Form v-bind="ProviderDocumentController.update.form(document.id)" class="space-y-6" v-slot="{ errors, processing }">
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div class="grid gap-2">
-                            <Label for="provider_id">Provider *</Label>
-                            <select id="provider_id" name="provider_id" required class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" :value="document.provider.id">
-                                <option value="">Select provider</option>
-                                <option v-for="p in providers" :key="p.id" :value="p.id" :selected="document.provider.id === p.id">
-                                    {{ p.first_name }} {{ p.last_name }} ({{ p.email }})
-                                </option>
-                            </select>
-                            <InputError :message="errors.provider_id" />
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="provider_application_id">Application</Label>
-                            <select id="provider_application_id" name="provider_application_id" class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-                                <option value="">No application</option>
-                                <option v-for="app in applications" :key="app.id" :value="app.id">
-                                    {{ app.application_number }} ({{ app.type.replace('_', ' ') }})
-                                </option>
-                            </select>
-                            <InputError :message="errors.provider_application_id" />
-                        </div>
-                    </div>
+        <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <Card class="shadow-none">
+                <CardHeader>
+                    <CardTitle>Document Details</CardTitle>
+                    <CardDescription>
+                        Update the document metadata. Upload a new version from
+                        the panel on the right to replace the file.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form class="space-y-6" @submit.prevent="submit">
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div class="grid gap-2">
+                                <Label for="type">Type *</Label>
+                                <Select
+                                    id="type"
+                                    :model-value="form.type"
+                                    @update:model-value="
+                                        form.type = String($event ?? '')
+                                    "
+                                >
+                                    <SelectTrigger class="w-full">
+                                        <SelectValue placeholder="Select type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem
+                                            v-for="type in documentTypes"
+                                            :key="type.value"
+                                            :value="type.value"
+                                        >
+                                            {{ type.label }}
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <InputError :message="form.errors.type" />
+                            </div>
 
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div class="grid gap-2">
-                            <Label for="type">Type *</Label>
-                            <select id="type" name="type" required class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" :value="document.type">
-                                <option value="cv">CV</option>
-                                <option value="license">License</option>
-                                <option value="dea">DEA</option>
-                                <option value="malpractice">Malpractice</option>
-                                <option value="education">Education</option>
-                                <option value="certification">Certification</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <InputError :message="errors.type" />
+                            <div class="grid gap-2">
+                                <Label for="name">Document Name *</Label>
+                                <Input
+                                    id="name"
+                                    v-model="form.name"
+                                    maxlength="255"
+                                />
+                                <InputError :message="form.errors.name" />
+                            </div>
                         </div>
-                        <div class="grid gap-2">
-                            <Label for="name">Document Name *</Label>
-                            <Input id="name" name="name" required :value="document.name" />
-                            <InputError :message="errors.name" />
-                        </div>
-                    </div>
 
-                    <div class="grid gap-4 md:grid-cols-2">
                         <div class="grid gap-2">
-                            <Label for="file_path">File Path *</Label>
-                            <Input id="file_path" name="file_path" required :value="document.file_path" />
-                            <InputError :message="errors.file_path" />
+                            <Label for="provider_application_id">
+                                Application
+                            </Label>
+                            <Select
+                                id="provider_application_id"
+                                :model-value="form.provider_application_id"
+                                @update:model-value="
+                                    form.provider_application_id = String(
+                                        $event ?? '',
+                                    )
+                                "
+                            >
+                                <SelectTrigger class="w-full">
+                                    <SelectValue placeholder="No application" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">
+                                        No application
+                                    </SelectItem>
+                                    <SelectItem
+                                        v-for="application in providerApplications"
+                                        :key="application.id"
+                                        :value="String(application.id)"
+                                    >
+                                        {{ application.application_number }}
+                                        ({{ application.type }})
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError
+                                :message="form.errors.provider_application_id"
+                            />
                         </div>
-                        <div class="grid gap-2">
-                            <Label for="file_name">File Name *</Label>
-                            <Input id="file_name" name="file_name" required :value="document.file_name" />
-                            <InputError :message="errors.file_name" />
-                        </div>
-                    </div>
 
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div class="grid gap-2">
-                            <Label for="mime_type">Mime Type</Label>
-                            <Input id="mime_type" name="mime_type" :value="document.mime_type" />
-                            <InputError :message="errors.mime_type" />
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="file_size">File Size</Label>
-                            <Input id="file_size" name="file_size" type="number" :value="document.file_size" />
-                            <InputError :message="errors.file_size" />
-                        </div>
-                    </div>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div class="grid gap-2">
+                                <Label for="issue_date">Issue Date</Label>
+                                <Input
+                                    id="issue_date"
+                                    v-model="form.issue_date"
+                                    type="date"
+                                />
+                                <InputError
+                                    :message="form.errors.issue_date"
+                                />
+                            </div>
 
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div class="grid gap-2">
-                            <Label for="status">Status *</Label>
-                            <select id="status" name="status" required class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" :value="document.status">
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                            <InputError :message="errors.status" />
+                            <div class="grid gap-2">
+                                <Label for="expiration_date">
+                                    Expiration Date
+                                </Label>
+                                <Input
+                                    id="expiration_date"
+                                    v-model="form.expiration_date"
+                                    type="date"
+                                />
+                                <InputError
+                                    :message="form.errors.expiration_date"
+                                />
+                            </div>
                         </div>
-                        <div class="grid gap-2">
-                            <Label for="reviewed_by">Reviewed By</Label>
-                            <select id="reviewed_by" name="reviewed_by" class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" :value="document.reviewed_by ? document.reviewed_by : ''">
-                                <option value="">None</option>
-                            </select>
-                            <InputError :message="errors.reviewed_by" />
-                        </div>
-                    </div>
 
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div class="grid gap-2">
-                            <Label for="reviewed_at">Reviewed Date</Label>
-                            <Input id="reviewed_at" name="reviewed_at" type="date" :default-value="document.reviewed_at" />
-                            <InputError :message="errors.reviewed_at" />
+                        <div class="flex items-center justify-between border-t pt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                @click="
+                                    router.visit(
+                                        `/provider-documents/${document.id}`,
+                                    )
+                                "
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" :disabled="form.processing">
+                                <Save class="mr-2 size-4" />
+                                {{ form.processing ? 'Saving…' : 'Save Changes' }}
+                            </Button>
                         </div>
-                        <div class="grid gap-2">
-                            <Label for="review_notes">Review Notes</Label>
-                            <Textarea id="review_notes" name="review_notes" rows="4" :default-value="document.review_notes" />
-                            <InputError :message="errors.review_notes" />
-                        </div>
-                    </div>
+                    </form>
+                </CardContent>
+            </Card>
 
-                    <div class="flex items-center justify-between">
-                        <Button type="submit" :disabled="processing">
-                            <Spinner v-if="processing" />
-                            Update Document
-                        </Button>
-                        <Button type="button" variant="outline" @click="router.visit(`/provider-documents/${document.id}`)">Cancel</Button>
-                    </div>
-                </Form>
-            </CardContent>
-        </Card>
+            <div class="space-y-4">
+                <Card class="shadow-none">
+                    <CardHeader>
+                        <CardTitle>Current File</CardTitle>
+                    </CardHeader>
+                    <CardContent class="space-y-3 text-sm">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-muted-foreground">Version</span>
+                            <span class="font-medium">v{{ document.version }}</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-muted-foreground">Status</span>
+                            <Badge
+                                :variant="statusBadge(document.status).variant"
+                                :class="statusBadge(document.status).class"
+                            >
+                                {{ statusBadge(document.status).label }}
+                            </Badge>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-muted-foreground">File</span>
+                            <span class="truncate text-right font-medium">
+                                {{ document.file_name }}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-muted-foreground">Size</span>
+                            <span>{{ document.human_file_size }}</span>
+                        </div>
+                        <div
+                            v-if="document.review_notes"
+                            class="rounded-md border bg-neutral-50 px-3 py-2 text-xs text-neutral-600"
+                        >
+                            {{ document.review_notes }}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card class="shadow-none">
+                    <CardHeader>
+                        <CardTitle>Upload New Version</CardTitle>
+                        <CardDescription>
+                            The current file is retained in version history and
+                            the new file returns to pending review.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form
+                            class="space-y-4"
+                            @submit.prevent="submitReplacement"
+                        >
+                            <div class="grid gap-2">
+                                <Label for="replacement_file">File *</Label>
+                                <Input
+                                    id="replacement_file"
+                                    ref="replacementFileInput"
+                                    type="file"
+                                    accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff,.doc,.docx"
+                                    @change="onReplacementFile"
+                                />
+                                <InputError
+                                    :message="replacementForm.errors.file"
+                                />
+                            </div>
+
+                            <div class="grid gap-2">
+                                <Label for="replacement_expiration">
+                                    Expiration Date
+                                </Label>
+                                <Input
+                                    id="replacement_expiration"
+                                    v-model="replacementForm.expiration_date"
+                                    type="date"
+                                />
+                                <InputError
+                                    :message="
+                                        replacementForm.errors.expiration_date
+                                    "
+                                />
+                            </div>
+
+                            <Button
+                                type="submit"
+                                class="w-full"
+                                :disabled="replacementForm.processing"
+                            >
+                                <RefreshCw class="mr-2 size-4" />
+                                {{
+                                    replacementForm.processing
+                                        ? 'Uploading…'
+                                        : 'Upload New Version'
+                                }}
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
     </div>
 </template>

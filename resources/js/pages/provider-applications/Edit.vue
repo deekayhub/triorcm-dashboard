@@ -48,7 +48,12 @@ const { toast } = useToast();
                 <CardTitle>Application Details</CardTitle>
             </CardHeader>
             <CardContent>
-                <Form v-bind="ProviderApplicationController.update.form(application.id)" class="space-y-6" v-slot="{ errors, processing }">
+                <Form
+                    method="put"
+                    :action="`/provider-applications/${application.id}`"
+                    class="space-y-6"
+                    v-slot="{ errors, processing }"
+                >
                     <div class="grid gap-4 md:grid-cols-2">
                         <div class="grid gap-2">
                             <Label for="type">Type *</Label>

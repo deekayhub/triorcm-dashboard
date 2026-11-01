@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Provider;
 use App\Models\User;
+use App\Policies\ProviderPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -50,5 +52,7 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Gate::before(fn (User $user) => $user->hasRole('super-admin') ? true : null);
+
+        Gate::policy(Provider::class, ProviderPolicy::class);
     }
 }

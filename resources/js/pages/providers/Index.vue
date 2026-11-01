@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as providersIndex } from '@/routes/providers';
 import { useToast } from '@/composables/useToast';
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 
 defineOptions({
     layout: {
@@ -26,7 +26,7 @@ const props = defineProps<{
         pending: number;
         inactive: number;
     };
-    verifications: {
+    providers: {
         data: Array<any>;
         links: Array<any>;
         meta: any;
@@ -104,44 +104,78 @@ async function deleteProvider(id: number) {
                     <thead class="bg-neutral-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Provider</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Specialty</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">NPI</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Specialty</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Team</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-border">
-                        <tr v-for="provider in props.verifications.data" :key="provider.id" class="hover:bg-neutral-50 cursor-pointer">
-                            <td class="px-6 py-4 font-medium">{{ provider.first_name }} {{ provider.last_name }}</td>
+                        <tr v-for="provider in props.providers.data" :key="provider.id" class="hover:bg-neutral-50 cursor-pointer">
+                            <td class="px-6 py-4 font-medium">
+                                <button @click="router.visit(`/providers/${provider.id}`)" class="text-primary hover:underline">
+                                    {{ provider.full_name }}
+                                </button>
+                                <p class="text-sm text-neutral-500">{{ provider.email }}</p>
+                            </td>
+                            <td class="px-6 py-4 text-neutral-500">{{ provider.npi || '-' }}</td>
+                            <td class="px-6 py-4 text-neutral-500">{{ provider.email }}</td>
                             <td class="px-6 py-4 text-neutral-500">{{ provider.specialty || '-' }}</td>
+                            <td class="px-6 py-4 text-neutral-500">{{ provider.team?.name || '-' }}</td>
                             <td class="px-6 py-4">
                                 <Badge variant="outline" class="text-sm capitalize">{{ provider.status }}</Badge>
                             </td>
-                            <td class="px-6 py-4 text-neutral-500">{{ provider.npi || '-' }}</td>
                             <td class="px-6 py-4 text-right">
-                                <Button variant="ghost" size="sm" class="text-primary">Edit</Button>
+                                <Button variant="ghost" size="sm" class="text-primary" @click="router.visit(`/providers/${provider.id}`)">View</Button>
+                                <Button variant="ghost" size="sm" class="text-primary" @click="router.visit(`/providers/${provider.id}/edit`)">Edit</Button>
                                 <Button variant="ghost" size="sm" class="text-destructive" @click="confirmDelete(provider.id)">Delete</Button>
                             </td>
                         </tr>
-                        <tr v-if="props.verifications.data.length === 0">
-                            <td colspan="5" class="px-6 py-8 text-center text-neutral-500">No providers found</td>
+                        <tr v-if="props.providers.data.length === 0">
+                            <td colspan="7" class="px-6 py-8 text-center text-neutral-500">No providers found</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-    </div>
+        <!-- Pagination -->
+        <section v-if="props.providers.meta && props.providers.data.length > 0" class="mt-4 flex justify-end">
+            <nav class="flex space-x-1">
+                <span class="px-3 py-1 text-sm text-neutral-500">
+                    Page {{ props.providers.meta.current_page }} of {{ props.providers.meta.last_page }}
+                </span>
+                <Button
+                    v-if="props.providers.meta.current_page > 1"
+                    variant="outline"
+                    size="sm"
+                    @click="router.visit(providersIndex({ page: props.providers.meta.current_page - 1 }))"
+                >
+                    Previous
+                </Button>
+                <Button
+                    v-if="props.providers.meta.current_page < props.providers.meta.last_page"
+                    variant="outline"
+                    size="sm"
+                    @click="router.visit(providersIndex({ page: props.providers.meta.current_page + 1 }))"
+                >
+                    Next
+                </Button>
+            </nav>
+        </section>
 
-    <!-- Delete Confirmation -->
-    <dialog :open="isDeleteOpen" class="modal modal-sm">
-        <form method="dialog" class="modal-box">
-            <h3 class="text-lg font-medium">Delete Provider</h3>
-            <p>Are you sure you want to delete this provider?</p>
-            <div class="flex justify-end gap-3 pt-4">
-                <button class="btn btn-ghost" @click="isDeleteOpen = false">Cancel</button>
-                <button class="btn btn-danger" @click="deleteProvider(provider.id)">Delete</button>
-            </div>
-        </form>
-    </dialog>
+        <!-- Delete Confirmation -->
+        <dialog :open="isDeleteOpen" class="modal modal-sm">
+            <form method="dialog" class="modal-box">
+                <h3 class="text-lg font-medium">Delete Provider</h3>
+                <p>Are you sure you want to delete this provider?</p>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button class="btn btn-ghost" @click="isDeleteOpen = false">Cancel</button>
+                    <button class="btn btn-danger" @click="deleteProvider(currentProviderId)">Delete</button>
+                </div>
+            </form>
+        </dialog>
+    </div>
 </template>

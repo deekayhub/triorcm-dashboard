@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, router } from '@inertiajs/vue3';
 import { ArrowLeft } from '@lucide/vue';
-import ProviderApplicationController from '@/actions/App/Http/Controllers/ProviderApplicationController';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,7 +46,12 @@ defineOptions({
                 <CardDescription>Basic application information</CardDescription>
             </CardHeader>
             <CardContent>
-                <Form v-bind="ProviderApplicationController.store.form()" class="space-y-6" v-slot="{ errors, processing }">
+                <Form
+                    method="post"
+                    action="/provider-applications"
+                    class="space-y-6"
+                    v-slot="{ errors, processing }"
+                >
                     <div class="grid gap-2">
                         <Label for="provider_id">Provider *</Label>
                         <select id="provider_id" name="provider_id" required class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">

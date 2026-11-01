@@ -30,7 +30,7 @@ class UserManagementTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('users/Index')
                 ->has('users')
-                ->has('roles', 4));
+                ->has('roles', 3));
     }
 
     public function test_managers_can_view_users_but_not_roles()
@@ -100,6 +100,6 @@ class UserManagementTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('roles/Index')
                 ->has('roles', 4)
-                ->has('permissions', 10));
+                ->has('permissions', 18));
     }
 }

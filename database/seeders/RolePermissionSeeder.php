@@ -25,6 +25,13 @@ class RolePermissionSeeder extends Seeder
         'roles.manage',
         'settings.manage',
         'activity-logs.view',
+        'providers.viewAny',
+        'providers.view',
+        'providers.create',
+        'providers.update',
+        'providers.archive',
+        'providers.assign',
+        'providers.viewSensitive',
     ];
 
     /**
@@ -43,6 +50,13 @@ class RolePermissionSeeder extends Seeder
             'roles.manage',
             'settings.manage',
             'activity-logs.view',
+            'providers.viewAny',
+            'providers.view',
+            'providers.create',
+            'providers.update',
+            'providers.archive',
+            'providers.assign',
+            'providers.viewSensitive',
         ],
         'admin' => [
             'dashboard.view',
@@ -56,6 +70,13 @@ class RolePermissionSeeder extends Seeder
             'roles.manage',
             'settings.manage',
             'activity-logs.view',
+            'providers.viewAny',
+            'providers.view',
+            'providers.create',
+            'providers.update',
+            'providers.archive',
+            'providers.assign',
+            'providers.viewSensitive',
         ],
         'manager' => [
             'dashboard.view',
@@ -63,10 +84,14 @@ class RolePermissionSeeder extends Seeder
             'reports.view',
             'users.view',
             'users.update',
+            'providers.viewAny',
+            'providers.view',
         ],
         'viewer' => [
             'dashboard.view',
             'reports.view',
+            'providers.viewAny',
+            'providers.view',
         ],
     ];
 

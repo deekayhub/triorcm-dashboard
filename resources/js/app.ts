@@ -7,9 +7,18 @@ import { initializeFlashToast } from '@/lib/flashToast';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-void createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
-    layout: (name) => {
+const pages = import.meta.glob('./pages/**/*.vue');
+
+const resolveComponent = (name: string): Promise<unknown> => {
+    const page = Object.entries(pages).find(
+        ([path]) => path.endsWith(`/${name}.vue`) || path.endsWith(`/${name}/index.vue`),
+    );
+    return page ? page[1]() : Promise.resolve(null);
+};
+
+const inertiaOptions: any = {
+    title: (title: string) => (title ? `${title} - ${appName}` : appName),
+    layout: (name: string) => {
         switch (true) {
             case name === 'Welcome':
                 return null;
@@ -21,9 +30,10 @@ void createInertiaApp({
                 return AppLayout;
         }
     },
-    withApp: (app) => {
+    resolve: resolveComponent,
+    withApp: (app: any) => {
         app.directive('focus', {
-            mounted: (el: HTMLElement, shouldFocus) => {
+            mounted: (el: HTMLElement, shouldFocus: any) => {
                 if (shouldFocus.value !== false) {
                     el.focus();
                 }
@@ -33,7 +43,9 @@ void createInertiaApp({
     progress: {
         color: '#4B5563',
     },
-});
+};
+
+void createInertiaApp(inertiaOptions);
 
 // This will set light / dark mode on page load...
 initializeTheme();

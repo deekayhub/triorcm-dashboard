@@ -91,7 +91,7 @@ const { toast } = useToast();
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Select application</SelectItem>
+                                    <SelectItem value=" ">Select application</SelectItem>
                                     <SelectItem
                                         v-for="app in applications"
                                         :key="app.id"
@@ -172,7 +172,7 @@ const { toast } = useToast();
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">None</SelectItem>
+                                        <SelectItem value=" ">None</SelectItem>
                                         <SelectItem
                                             v-for="user in users"
                                             :key="user.id"

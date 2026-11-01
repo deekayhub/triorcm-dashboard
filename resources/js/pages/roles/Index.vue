@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import {
@@ -353,7 +353,7 @@ const deleteRole = async (role: RoleRow) => {
                     class="flex flex-wrap items-center justify-between gap-2 border-t px-5 py-2.5 text-xs text-muted-foreground"
                 >
                     <span>
-                        {{ roles.length }} roles ·
+                        {{ roles.length }} roles �
                         {{ permissions.length }} permissions
                     </span>
                     <span>Click Edit on a role to manage its permissions.</span>

@@ -98,7 +98,7 @@ const { toast } = useToast();
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Select provider</SelectItem>
+                                    <SelectItem value=" ">Select provider</SelectItem>
                                     <SelectItem
                                         v-for="p in props.providers"
                                         :key="p.id"
@@ -129,7 +129,7 @@ const { toast } = useToast();
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">No application</SelectItem>
+                                        <SelectItem value=" ">No application</SelectItem>
                                         <SelectItem
                                             v-for="app in props.applications"
                                             :key="app.id"
@@ -283,7 +283,7 @@ const { toast } = useToast();
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">None</SelectItem>
+                                        <SelectItem value=" ">None</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <InputError

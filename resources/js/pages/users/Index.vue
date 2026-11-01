@@ -1,4 +1,4 @@
-ï»¿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { Form, Head, router } from '@inertiajs/vue3';
 import {
@@ -199,7 +199,7 @@ watch(deleteOpen, (open) => {
 
 const formatDate = (value: string | null): string => {
     if (value === null) {
-        return 'â€”';
+        return '—';
     }
 
     const date = new Date(value);
@@ -253,10 +253,10 @@ const dtOptions = computed(() => ({
         info: 'Showing _START_ to _END_ of _TOTAL_ users',
         infoEmpty: 'Showing 0 to 0 of 0 users',
         paginate: {
-            previous: 'â€¹',
-            next: 'â€º',
-            first: 'Â«',
-            last: 'Â»',
+            previous: '‹',
+            next: '›',
+            first: '«',
+            last: '»',
         },
     },
     pagingType: 'simple_numbers',

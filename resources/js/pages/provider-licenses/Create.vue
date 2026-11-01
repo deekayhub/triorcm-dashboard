@@ -87,7 +87,7 @@ const { toast } = useToast();
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Select provider</SelectItem>
+                                    <SelectItem value=" ">Select provider</SelectItem>
                                     <SelectItem
                                         v-for="p in providers"
                                         :key="p.id"

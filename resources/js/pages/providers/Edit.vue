@@ -176,7 +176,7 @@ defineOptions({
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Select</SelectItem>
+                                        <SelectItem value=" ">Select</SelectItem>
                                         <SelectItem value="male">Male</SelectItem>
                                         <SelectItem value="female">
                                             Female
@@ -246,7 +246,7 @@ defineOptions({
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">No team</SelectItem>
+                                        <SelectItem value=" ">No team</SelectItem>
                                         <SelectItem
                                             v-for="team in teams"
                                             :key="team.id"

@@ -55,7 +55,7 @@ defineOptions({
                     <div class="grid gap-2">
                         <Label for="provider_id">Provider *</Label>
                         <select id="provider_id" name="provider_id" required class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-                            <option value="">Select provider</option>
+                            <option value=" ">Select provider</option>
                             <option v-for="p in providers" :key="p.id" :value="p.id" :selected="provider && provider.id === p.id">
                                 {{ p.first_name }} {{ p.last_name }} ({{ p.email }})
                             </option>

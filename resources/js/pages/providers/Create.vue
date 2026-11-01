@@ -136,12 +136,12 @@ const { toast } = useToast();
                             </div>
                             <div>
                                 <Label for="gender">Gender</Label>
-                                <Select defaultValue="" name="gender">
+                                <Select defaultvalue=" " name="gender">
                                     <SelectTrigger class="h-9">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Select</SelectItem>
+                                        <SelectItem value=" ">Select</SelectItem>
                                         <SelectItem value="male">Male</SelectItem>
                                         <SelectItem value="female">Female</SelectItem>
                                         <SelectItem value="other">Other</SelectItem>

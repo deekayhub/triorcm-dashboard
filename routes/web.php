@@ -6,6 +6,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProviderApplicationController;
 use App\Http\Controllers\ProviderContactController;
 use App\Http\Controllers\ProviderController;
+use App\Http\Controllers\ProviderDashboardController;
 use App\Http\Controllers\ProviderDisclosureController;
 use App\Http\Controllers\ProviderDocumentController;
 use App\Http\Controllers\ProviderEducationController;
@@ -33,6 +34,7 @@ Route::middleware('guest')->get('/', fn (Request $request) => Inertia::render('a
 
 Route::middleware(['auth', 'verified', 'permission:dashboard.view'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+    Route::get('provider-dashboard', [ProviderDashboardController::class, 'index'])->name('provider-dashboard.index');
 
     Route::get('users', [UserController::class, 'index'])
         ->middleware('permission:users.view')

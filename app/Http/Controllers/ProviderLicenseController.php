@@ -43,7 +43,7 @@ class ProviderLicenseController extends Controller
             'provider_id' => ['required', 'exists:providers,id'],
             'license_number' => ['required', 'string', 'max:100', Rule::unique('provider_licenses', 'license_number')],
             'license_type' => ['required', Rule::in(['md', 'do', 'np', 'pa', 'rn', 'other'])],
-            'state' => ['required', 'string', 'max:2'] . Rule::unique('provider_licenses', 'state')->ignore(fn($q) => $q->where('provider_id', $request->provider_id)),
+            'state' => ['required', 'string', 'max:2', Rule::unique('provider_licenses', 'state')->where('provider_id', $request->provider_id)],
             'issue_date' => ['required', 'date'],
             'expiration_date' => ['required', 'date'],
             'status' => ['required', Rule::in(['active', 'expired', 'suspended', 'revoked'])],
@@ -83,8 +83,9 @@ class ProviderLicenseController extends Controller
     public function update(Request $request, ProviderLicense $providerLicense): RedirectResponse
     {
         $validated = $request->validate([
+            'license_number' => ['required', 'string', 'max:100', Rule::unique('provider_licenses', 'license_number')->ignore($providerLicense->id)],
             'license_type' => ['required', Rule::in(['md', 'do', 'np', 'pa', 'rn', 'other'])],
-            'state' => ['required', 'string', 'max:2'] . Rule::unique('provider_licenses', 'state')->ignore($providerLicense->id),
+            'state' => ['required', 'string', 'max:2', Rule::unique('provider_licenses', 'state')->ignore($providerLicense->id)->where('provider_id', $providerLicense->provider_id)],
             'issue_date' => ['required', 'date'],
             'expiration_date' => ['required', 'date'],
             'status' => ['required', Rule::in(['active', 'expired', 'suspended', 'revoked'])],

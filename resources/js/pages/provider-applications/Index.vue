@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { CheckCircle, Plus, FileText, LayoutDashboard } from '@lucide/vue';
+import { Plus } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { index as providerApplicationsIndex } from '@/routes/provider-applications';
 import { useToast } from '@/composables/useToast';
 import { ref } from 'vue';
@@ -36,76 +42,140 @@ function confirmDelete(id: number) {
     currentApplicationId = id;
     isDeleteOpen.value = true;
 }
-
-// Close dialog when clicking outside or on ESC
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        isDeleteOpen.value = false;
-    }
-});
 </script>
 
 <template>
     <Head title="Applications" />
 
-    <div class="flex h-full flex-1 flex-col gap-5 overflow-x-clip p-4 md:p-6 bg-white rounded-lg shadow-sm border border-border">
-
+    <div class="flex h-full flex-1 flex-col gap-4 overflow-x-clip p-4 md:p-6 bg-neutral-50">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="space-y-1.5">
+            <div class="space-y-1">
                 <div class="flex items-center gap-2">
                     <p class="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
                         Credentialing
                     </p>
                 </div>
-                <h1 class="text-2xl font-semibold tracking-tight">Applications</h1>
-                <p class="text-sm text-muted-foreground">
+                <h1 class="text-xl font-semibold tracking-tight">Applications</h1>
+                <p class="text-xs text-muted-foreground">
                     Track provider credentialing applications
                 </p>
             </div>
-            <Button @click="router.visit('/provider-applications/create')">
-                <Plus class="size-4" />
+            <Button
+                @click="router.visit('/provider-applications/create')"
+                class="inline-flex items-center gap-2 px-3 py-1.5 text-sm"
+            >
+                <Plus class="size-3.5" />
                 New Application
             </Button>
         </div>
 
-        <Card class="gap-0 rounded-lg shadow-sm border border-border">
-            <CardContent class="px-5 pb-4">
-                <p class="text-sm text-muted-foreground">Total: {{ applications.data.length }}</p>
-                <table class="w-full text-sm mt-3">
-                    <thead>
-                        <tr class="border-b text-left text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
-                            <th class="px-5 py-2.5 font-medium">Application</th>
-                            <th class="px-5 py-2.5 font-medium">Provider</th>
-                            <th class="px-5 py-2.5 font-medium">Type</th>
-                            <th class="px-5 py-2.5 font-medium">Status</th>
-                            <th class="px-5 py-2.5 text-right font-medium">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="app in applications.data" :key="app.id" class="border-b last:border-0 hover:bg-neutral-50 cursor-pointer">
-                            <td class="px-5 py-3">
-                                <button class="text-left" @click="router.visit(`/provider-applications/${app.id}`)">
-                                    <p class="font-medium">Application #{{ app.id }}</p>
-                                </button>
-                            </td>
-                            <td class="px-5 py-3 text-neutral-500">
-                                {{ app.provider ? `${app.provider.first_name} ${app.provider.last_name}` : '-' }}
-                            </td>
-                            <td class="px-5 py-3 text-neutral-500 capitalize">{{ app.type }}</td>
-                            <td class="px-5 py-3">
-                                <Badge variant="outline" class="capitalize">{{ app.status }}</Badge>
-                            </td>
-                            <td class="px-5 py-3 text-right">
-                                <Button variant="ghost" size="sm" @click="router.visit(`/provider-applications/${app.id}/edit`)">Edit</Button>
-                                <Button variant="ghost" size="sm" class="text-destructive" @click="confirmDelete(app.id)">Delete</Button>
-                            </td>
-                        </tr>
-                        <tr v-if="applications.data.length === 0">
-                            <td colspan="5" class="px-5 py-6 text-center text-muted-foreground">No applications found</td>
-                        </tr>
-                    </tbody>
-                </table>
+        <Card class="w-full border border-border rounded-md">
+            <CardContent class="p-0">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-border text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                <th class="px-3 py-2">Application</th>
+                                <th class="px-3 py-2">Provider</th>
+                                <th class="px-3 py-2">Type</th>
+                                <th class="px-3 py-2">Status</th>
+                                <th class="px-3 py-2 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border">
+                            <tr
+                                v-for="app in applications.data"
+                                :key="app.id"
+                                class="hover:bg-neutral-50 cursor-pointer"
+                            >
+                                <td class="px-3 py-2">
+                                    <button
+                                        class="text-left text-primary font-medium hover:underline"
+                                        @click="router.visit('/provider-applications/' + app.id)"
+                                    >
+                                        Application #{{ app.id }}
+                                    </button>
+                                </td>
+                                <td class="px-3 py-2 text-muted-foreground">
+                                    {{
+                                        app.provider
+                                            ? app.provider.first_name + ' ' + app.provider.last_name
+                                            : '-'
+                                    }}
+                                </td>
+                                <td class="px-3 py-2 text-muted-foreground capitalize">
+                                    {{ app.type }}
+                                </td>
+                                <td class="px-3 py-2">
+                                    <Badge variant="outline" class="text-sm capitalize">
+                                        {{ app.status }}
+                                    </Badge>
+                                </td>
+                                <td class="px-3 py-2 text-right">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        @click="router.visit('/provider-applications/' + app.id + '/edit')"
+                                        class="text-primary"
+                                    >
+                                        Edit
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        class="text-destructive"
+                                        @click="confirmDelete(app.id)"
+                                    >
+                                        Delete
+                                    </Button>
+                                </td>
+                            </tr>
+                            <tr v-if="applications.data.length === 0">
+                                <td
+                                    colspan="5"
+                                    class="px-3 py-4 text-center text-muted-foreground"
+                                >
+                                    No applications found
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </CardContent>
         </Card>
+
+        <section
+            v-if="
+                applications.meta && applications.data.length > 0
+            "
+            class="mt-2 flex justify-end"
+        >
+            <nav class="flex space-x-1">
+                <span class="px-2.5 py-1 text-xs text-muted-foreground">
+                    Page {{
+                        applications.meta.current_page
+                    }} of {{ applications.meta.last_page }}
+                </span>
+                <Button
+                    v-if="applications.meta.current_page > 1"
+                    variant="outline"
+                    size="sm"
+                    @click="router.visit(providerApplicationsIndex({ page: applications.meta.current_page - 1 }))"
+                >
+                    Previous
+                </Button>
+                <Button
+                    v-if="
+                        applications.meta.current_page <
+                        applications.meta.last_page
+                    "
+                    variant="outline"
+                    size="sm"
+                    @click="router.visit(providerApplicationsIndex({ page: applications.meta.current_page + 1 }))"
+                >
+                    Next
+                </Button>
+            </nav>
+        </section>
     </div>
 </template>
